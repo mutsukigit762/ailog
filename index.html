@@ -5,7 +5,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23e8e8f0' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z'/></svg>">
-<link rel="apple-touch-icon" href="apple-touch-icon.png"><title>AI Log</title>
+<link rel="apple-touch-icon" href="/apple-touch-icon.png"><title>AI Log</title>
 <style>
   :root { --bg: #000000; --surface: #000000; --surface2: #111111; --border: #1a1a1a; --text: #e8e8f0; --text-muted: #707070; --accent: #5b8dee; }
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -46,15 +46,15 @@
   .msg-row { display: flex; width: 100%; -webkit-user-select: none; user-select: none; }
   .msg-row.ai { align-self: flex-start; max-width: 100%; }
   .msg-row.user { align-self: flex-end; max-width: 88%; justify-content: flex-end; margin: 12px 0; }
-  .bubble { font-size: 17px; line-height: 1.35; word-break: break-word; }
+  .bubble { font-size: 18px; line-height: 1.35; word-break: break-word; }
   .msg-row.ai .bubble { background: transparent; color: #e8e8f0; padding: 2px 4px; width: 100%; }
   .msg-row.user .bubble { background: #2a2a2a; color: #f0f0f0; padding: 10px 15px; border-radius: 20px; }
-  .ai-rich { font-size: 17px; line-height: 1.35; word-break: break-word; font-family: -apple-system, 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', sans-serif !important; color: #e8e8f0 !important; }
+  .ai-rich { font-size: 18px; line-height: 1.35; word-break: break-word; font-family: -apple-system, 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', sans-serif !important; color: #e8e8f0 !important; }
   .ai-rich * { font-family: -apple-system, 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', sans-serif !important; color: inherit !important; background: transparent !important; }
-  .ai-rich p, .ai-rich span, .ai-rich li, .ai-rich td { font-size: 17px !important; }
+  .ai-rich p, .ai-rich span, .ai-rich li, .ai-rich td { font-size: 18px !important; }
   .ai-rich h1 { font-size: 22px; font-weight: 700; margin: 0.7em 0 0.4em; }
   .ai-rich h2 { font-size: 19px; font-weight: 700; margin: 0.7em 0 0.4em; }
-  .ai-rich h3 { font-size: 17px; font-weight: 700; margin: 0.6em 0 0.3em; }
+  .ai-rich h3 { font-size: 18px; font-weight: 700; margin: 0.6em 0 0.3em; }
   .ai-rich strong, .ai-rich b { font-weight: 700; }
   .ai-rich p, .ai-rich div { margin-bottom: 0.8em; }
   .ai-rich p:last-child, .ai-rich div:last-child { margin-bottom: 0; }
@@ -173,6 +173,9 @@ const KEY = 'ailog_v1';
 let convs = [];
 let currentId = null;
 let lastConvId = null;
+let sortMode = 'created';
+
+
 let aiRichHtml = '';
 try { convs = JSON.parse(localStorage.getItem(KEY)) || []; } catch(e) {}
 
@@ -206,7 +209,7 @@ function sendMessage() {
   const c = convs.find(x => x.id === currentId);
   if (!c) return;
   c.messages.push({ role: 'user', text });
-  persist();
+  c.updatedAt = Date.now();
   input.value = '';
   input.style.height = 'auto';
   renderMessages(c);
@@ -246,7 +249,7 @@ function saveAIMessage() {
   const c = convs.find(x => x.id === currentId);
   if (!c) { switchToUserMode(); return; }
   c.messages.push({ role: 'ai', text });
-  persist();
+  c.updatedAt = Date.now();
   aiRichHtml = '';
   renderMessages(c);
   switchToUserMode();
@@ -368,7 +371,12 @@ function renderList() {
   const panel = document.getElementById('list-panel');
   const filtered = convs.filter(c => !q || c.title.toLowerCase().includes(q) || c.messages.some(m => m.text.toLowerCase().includes(q)));
   if (!filtered.length) { panel.innerHTML = '<div class="empty-list">会話がまだないか、<br>検索結果なし</div>'; return; }
-  panel.innerHTML = filtered.slice().reverse().map(c => {
+  const sorted = filtered.slice().sort((a, b) => {
+    if (sortMode === 'updated') return (b.updatedAt || b.createdAt || 0) - (a.updatedAt || a.createdAt || 0);
+    if (sortMode === 'opened') return (b.openedAt || b.createdAt || 0) - (a.openedAt || a.createdAt || 0);
+    return (b.createdAt || 0) - (a.createdAt || 0);
+  });
+  panel.innerHTML = sorted.map(c => {
     const rawPreview = c.messages[0]?.text || '';
     const preview = rawPreview.replace(/<[^>]*>/g, '').slice(0, 40);
     const bl = c.ai === 'grok' ? 'badge-grok' : 'badge-claude';
@@ -400,6 +408,8 @@ function fadeSwitch(hideEl, showEl, cb) {
 function openConv(id) {
   currentId = id;
   const c = convs.find(x => x.id === id); if (!c) return;
+  c.openedAt = Date.now();
+  persist();
   const listView = document.getElementById('list-view');
   const chatView = document.getElementById('chat-view');
   document.getElementById('chatTitle').textContent = c.title;
