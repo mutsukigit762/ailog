@@ -3,7 +3,7 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23e8e8f0' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z'/></svg>">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png"><title>AI Log</title>
 <style>
@@ -671,6 +671,26 @@ function initSwipe() {
 }
 
 renderList();
+
+// iOS Safari キーボード対策: visualViewport でチャット画面の高さを固定
+function applyViewport() {
+  const vv = window.visualViewport;
+  if (!vv) return;
+  const chatView = document.getElementById('chat-view');
+  const listView = document.getElementById('list-view');
+  const h = vv.height;
+  const offsetTop = vv.offsetTop;
+  chatView.style.top = offsetTop + 'px';
+  chatView.style.height = h + 'px';
+  listView.style.top = offsetTop + 'px';
+  listView.style.height = h + 'px';
+}
+
+if (window.visualViewport) {
+  window.visualViewport.addEventListener('resize', applyViewport);
+  window.visualViewport.addEventListener('scroll', applyViewport);
+  applyViewport();
+}
 </script>
 
 </body>
