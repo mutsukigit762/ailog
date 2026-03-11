@@ -5,96 +5,135 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23e8e8f0' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z'/></svg>">
-<link rel="apple-touch-icon" href="/apple-touch-icon.png"><title>AI Log</title>
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<title>AI Log</title>
 <style>
   :root { --bg: #000000; --surface: #000000; --surface2: #111111; --border: #1a1a1a; --text: #e8e8f0; --text-muted: #707070; --accent: #5b8dee; }
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: -apple-system, 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', sans-serif; background: var(--bg); color: var(--text); height: 100dvh; overflow: hidden; font-size: 14px; }
-  #list-view { position: fixed; inset: 0; display: flex; flex-direction: column; overflow: hidden; }
-  .list-header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 12px 16px; display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
-  .list-header h1 { font-size: 22px; font-weight: 700; flex: 1; }
-  .header-btn { background: var(--surface2); border: 1px solid var(--border); color: var(--text); border-radius: 8px; padding: 6px 12px; font-size: 12px; cursor: pointer; font-family: inherit; }
-  .search-wrap { padding: 10px 12px; background: var(--surface); border-bottom: 1px solid var(--border); flex-shrink: 0; }
-  .search-input { width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 20px; padding: 7px 14px; color: var(--text); font-size: 16px; font-family: inherit; outline: none; }
-  .search-input:focus { border-color: var(--accent); }
-  .search-input::placeholder { color: var(--text-muted); }
-  #list-panel { flex: 1; overflow-y: auto; -webkit-user-select: none; user-select: none; }
-  .conv-item { padding: 14px 16px; border-bottom: 1px solid var(--border); cursor: pointer; display: flex; align-items: flex-start; gap: 12px; }
-  .conv-item:active { background: var(--surface2); }
-  .conv-row { position: relative; overflow: hidden; border-bottom: 1px solid var(--border); }
-  .conv-row .conv-item { border-bottom: none; transition: transform 0.2s; will-change: transform; }
-  .conv-row .delete-btn { position: absolute; right: -80px; top: 0; bottom: 0; width: 80px; background: #c0392b; color: #fff; border: none; font-size: 13px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-family: inherit; }
-  .conv-badge { font-size: 11px; font-weight: 500; padding: 2px 0; border-radius: 10px; flex-shrink: 0; margin-top: 2px; width: 44px; text-align: center; }
-  .badge-claude { background: #cc5c3a; color: #fff; }
-  .badge-grok { background: #000000; color: #ffffff; border: 1px solid #333; }
-  .conv-info { flex: 1; min-width: 0; }
-  .conv-title { font-size: 15px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .conv-preview { font-size: 13px; color: var(--text-muted); margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .conv-date { font-size: 12px; color: var(--text-muted); flex-shrink: 0; margin-top: 2px; }
-  .empty-list { padding: 40px 20px; text-align: center; color: var(--text-muted); font-size: 13px; line-height: 1.8; }
-  #chat-view { position: fixed; inset: 0; display: none; flex-direction: column; overflow: hidden; }
-  .chat-header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 10px 14px; display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
-  .back-btn { background: none; border: none; color: #666; font-size: 18px; cursor: pointer; padding: 2px 6px; line-height: 1; }
-  .chat-title-wrap { flex: 1; display: flex; align-items: center; gap: 8px; min-width: 0; }
-  #chatTitle { font-size: 14px; font-weight: 500; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  #chatBadge { cursor: pointer; }
-  .icon-btn { background: none; border: none; color: #666; cursor: pointer; padding: 6px; display: flex; align-items: center; border-radius: 6px; }
-  .messages { flex: 1; overflow-y: auto; padding: 16px 12px; display: flex; flex-direction: column; gap: 10px; -webkit-user-select: none; user-select: none; }
-  .messages.bg-grok { background: #000000; }
-  .messages.bg-claude { background: #2c2c2e; }
-  .messages.bg-claude .msg-row.user .bubble { background: #1c1c1e; }
-  .msg-row { display: flex; width: 100%; -webkit-user-select: none; user-select: none; }
-  .msg-row.ai { align-self: flex-start; max-width: 100%; }
-  .msg-row.user { align-self: flex-end; max-width: 88%; justify-content: flex-end; margin: 12px 0; }
-  .bubble { font-size: 18px; line-height: 1.35; word-break: break-word; }
-  .msg-row.ai .bubble { background: transparent; color: #e8e8f0; padding: 2px 4px; width: 100%; }
-  .msg-row.user .bubble { background: #2a2a2a; color: #f0f0f0; padding: 10px 15px; border-radius: 20px; }
-  .ai-rich { font-size: 18px; line-height: 1.35; word-break: break-word; font-family: -apple-system, 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', sans-serif !important; color: #e8e8f0 !important; }
-  .ai-rich * { font-family: -apple-system, 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', sans-serif !important; color: inherit !important; background: transparent !important; }
-  .ai-rich p, .ai-rich span, .ai-rich li, .ai-rich td { font-size: 18px !important; }
-  .ai-rich h1 { font-size: 22px; font-weight: 700; margin: 0.7em 0 0.4em; }
-  .ai-rich h2 { font-size: 19px; font-weight: 700; margin: 0.7em 0 0.4em; }
-  .ai-rich h3 { font-size: 18px; font-weight: 700; margin: 0.6em 0 0.3em; }
-  .ai-rich strong, .ai-rich b { font-weight: 700; }
-  .ai-rich p, .ai-rich div { margin-bottom: 0.8em; }
-  .ai-rich p:last-child, .ai-rich div:last-child { margin-bottom: 0; }
-  .ai-rich ul, .ai-rich ol { padding-left: 1.8em; margin-bottom: 0.5em; }
-  .ai-rich li { margin-bottom: 0.2em; }
-  .chat-input-wrap { background: var(--surface); border-top: 1px solid var(--border); padding: 10px 12px; padding-bottom: calc(10px + env(safe-area-inset-bottom)); flex-shrink: 0; }
-  .chat-input-row { display: flex; align-items: flex-end; gap: 8px; }
-  .role-toggle-btn { background: #2a2a2a; border: 1px solid #555; color: #f0f0f0; border-radius: 16px; padding: 6px 12px; font-size: 12px; cursor: pointer; font-family: inherit; flex-shrink: 0; -webkit-user-select: none; user-select: none; }
-  .chat-textarea { flex: 1; background: var(--surface2); border: 1px solid var(--border); border-radius: 16px; padding: 9px 14px; color: var(--text); font-size: 16px; font-family: inherit; outline: none; resize: none; min-height: 38px; max-height: 140px; line-height: 1.4; overflow-y: auto; }
-  .chat-textarea:focus { border-color: #ffffff; }
-  .chat-textarea::placeholder { color: var(--text-muted); }
-  .send-btn { background: #ffffff; border: none; color: #000000; border-radius: 50%; width: 36px; height: 36px; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-  .ai-input-wrap { background: var(--surface); border-top: 1px solid var(--border); padding: 10px 12px; padding-bottom: calc(10px + env(safe-area-inset-bottom)); flex-shrink: 0; display: none; }
-  .ai-input-wrap.active { display: block; }
-  .ai-input-header { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
-  .ai-input-label { font-size: 12px; color: var(--accent); font-weight: 500; flex: 1; }
-  .ai-cancel-btn { background: none; border: none; color: var(--text-muted); font-size: 13px; cursor: pointer; font-family: inherit; padding: 2px 8px; }
-  .ai-save-btn { background: var(--accent); border: none; color: #fff; border-radius: 12px; padding: 5px 14px; font-size: 13px; cursor: pointer; font-family: inherit; }
-  .ai-rich-input { width: 100%; min-height: 80px; max-height: 220px; background: var(--surface2); border: 1px solid var(--accent); border-radius: 12px; padding: 10px 14px; color: var(--text); font-size: 16px; font-family: -apple-system, 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', sans-serif; outline: none; resize: none; line-height: 1.35; overflow-y: auto; }
-  .ai-rich-input::placeholder { color: var(--text-muted); }
-  .overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 100; align-items: flex-end; justify-content: center; }
-  .overlay.open { display: flex; }
-  .modal { background: var(--surface2); border-top: 1px solid var(--border); border-radius: 20px 20px 0 0; width: 100%; max-width: 600px; padding: 20px 16px 32px; display: flex; flex-direction: column; gap: 12px; max-height: 80dvh; overflow-y: auto; }
-  .modal h2 { font-size: 15px; font-weight: 500; text-align: center; }
-  .modal input { width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 9px 12px; color: var(--text); font-size: 16px; font-family: inherit; outline: none; }
-  .modal input:focus { border-color: var(--accent); }
-  .modal-actions { display: flex; gap: 8px; }
-  .btn-cancel { flex: 1; padding: 11px; border-radius: 10px; border: 1px solid var(--border); background: transparent; color: var(--text-muted); font-family: inherit; font-size: 13px; cursor: pointer; }
-  .btn-save { flex: 2; padding: 11px; border-radius: 10px; border: none; background: var(--accent); color: #fff; font-family: inherit; font-size: 13px; font-weight: 500; cursor: pointer; }
-  ::-webkit-scrollbar { width: 4px; }
-  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+  html, body { height: 100%; overflow: hidden; font-family: -apple-system, 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', sans-serif; background: var(--bg); color: var(--text); font-size: 14px; }
+
+/* LIST VIEW */
+#list-view { position: fixed; inset: 0; display: flex; flex-direction: column; }
+.list-header { background: var(–surface); border-bottom: 1px solid var(–border); padding: 12px 16px; display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
+.list-header h1 { font-size: 22px; font-weight: 700; flex: 1; }
+.header-btn { background: var(–surface2); border: 1px solid var(–border); color: var(–text); border-radius: 8px; padding: 6px 12px; font-size: 12px; cursor: pointer; font-family: inherit; }
+.search-wrap { padding: 10px 12px; background: var(–surface); border-bottom: 1px solid var(–border); flex-shrink: 0; }
+.search-input { width: 100%; background: var(–bg); border: 1px solid var(–border); border-radius: 20px; padding: 7px 14px; color: var(–text); font-size: 16px; font-family: inherit; outline: none; }
+.search-input:focus { border-color: var(–accent); }
+.search-input::placeholder { color: var(–text-muted); }
+#list-panel { flex: 1; overflow-y: auto; -webkit-user-select: none; user-select: none; }
+.conv-item { padding: 14px 16px; cursor: pointer; display: flex; align-items: flex-start; gap: 12px; }
+.conv-item:active { background: var(–surface2); }
+.conv-row { position: relative; overflow: hidden; border-bottom: 1px solid var(–border); }
+.conv-row .conv-item { transition: transform 0.2s; will-change: transform; }
+.conv-row .delete-btn { position: absolute; right: -80px; top: 0; bottom: 0; width: 80px; background: #c0392b; color: #fff; border: none; font-size: 13px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-family: inherit; }
+.conv-badge { font-size: 11px; font-weight: 500; padding: 2px 0; border-radius: 10px; flex-shrink: 0; margin-top: 2px; width: 44px; text-align: center; }
+.badge-claude { background: #cc5c3a; color: #fff; }
+.badge-grok { background: #000000; color: #ffffff; border: 1px solid #333; }
+.conv-info { flex: 1; min-width: 0; }
+.conv-title { font-size: 15px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.conv-preview { font-size: 13px; color: var(–text-muted); margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.conv-date { font-size: 12px; color: var(–text-muted); flex-shrink: 0; margin-top: 2px; }
+.empty-list { padding: 40px 20px; text-align: center; color: var(–text-muted); font-size: 13px; line-height: 1.8; }
+
+/* CHAT HEADER - 完全独立fixed */
+#chat-header {
+position: fixed; top: 0; left: 0; right: 0; z-index: 10;
+background: var(–surface); border-bottom: 1px solid var(–border);
+padding: 10px 14px; display: none; align-items: center; gap: 10px;
+}
+#chat-header.visible { display: flex; }
+.back-btn { background: none; border: none; color: #666; font-size: 18px; cursor: pointer; padding: 2px 6px; line-height: 1; }
+.chat-title-wrap { flex: 1; display: flex; align-items: center; gap: 8px; min-width: 0; }
+#chatTitle { font-size: 14px; font-weight: 500; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#chatBadge { cursor: pointer; }
+
+/* MESSAGES - 完全独立fixed、上下paddingでヘッダーと入力欄を避ける */
+#messages {
+position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+overflow-y: auto;
+padding: 56px 12px 70px;
+display: none; flex-direction: column; gap: 10px;
+-webkit-user-select: none; user-select: none;
+}
+#messages.visible { display: flex; }
+#messages.bg-grok { background: #000000; }
+#messages.bg-claude { background: #2c2c2e; }
+#messages.bg-claude .msg-row.user .bubble { background: #1c1c1e; }
+
+.msg-row { display: flex; width: 100%; }
+.msg-row.ai { align-self: flex-start; max-width: 100%; }
+.msg-row.user { align-self: flex-end; max-width: 88%; justify-content: flex-end; margin: 12px 0; }
+.bubble { font-size: 18px; line-height: 1.35; word-break: break-word; }
+.msg-row.ai .bubble { background: transparent; color: #e8e8f0; padding: 2px 4px; width: 100%; }
+.msg-row.user .bubble { background: #2a2a2a; color: #f0f0f0; padding: 10px 15px; border-radius: 20px; }
+.ai-rich { font-size: 18px; line-height: 1.35; word-break: break-word; font-family: -apple-system, ‘Hiragino Sans’, ‘Hiragino Kaku Gothic ProN’, sans-serif !important; color: #e8e8f0 !important; }
+.ai-rich * { font-family: -apple-system, ‘Hiragino Sans’, ‘Hiragino Kaku Gothic ProN’, sans-serif !important; color: inherit !important; background: transparent !important; }
+.ai-rich p, .ai-rich span, .ai-rich li, .ai-rich td { font-size: 18px !important; }
+.ai-rich h1 { font-size: 22px; font-weight: 700; margin: 0.7em 0 0.4em; }
+.ai-rich h2 { font-size: 19px; font-weight: 700; margin: 0.7em 0 0.4em; }
+.ai-rich h3 { font-size: 18px; font-weight: 700; margin: 0.6em 0 0.3em; }
+.ai-rich strong, .ai-rich b { font-weight: 700; }
+.ai-rich p, .ai-rich div { margin-bottom: 0.8em; }
+.ai-rich p:last-child, .ai-rich div:last-child { margin-bottom: 0; }
+.ai-rich ul, .ai-rich ol { padding-left: 1.8em; margin-bottom: 0.5em; }
+.ai-rich li { margin-bottom: 0.2em; }
+
+/* 入力欄 - chat-viewから切り離して完全独立fixed */
+#input-panel {
+position: fixed; left: 0; right: 0; bottom: 0; z-index: 20;
+display: none;
+background: var(–surface); border-top: 1px solid var(–border);
+padding: 10px 12px;
+padding-bottom: max(10px, env(safe-area-inset-bottom));
+}
+#input-panel.visible { display: block; }
+.chat-input-row { display: flex; align-items: flex-end; gap: 8px; }
+.role-toggle-btn { background: #2a2a2a; border: 1px solid #555; color: #f0f0f0; border-radius: 16px; padding: 6px 12px; font-size: 12px; cursor: pointer; font-family: inherit; flex-shrink: 0; -webkit-user-select: none; user-select: none; }
+.chat-textarea { flex: 1; background: var(–surface2); border: 1px solid var(–border); border-radius: 16px; padding: 9px 14px; color: var(–text); font-size: 16px; font-family: inherit; outline: none; resize: none; min-height: 38px; max-height: 140px; line-height: 1.4; overflow-y: auto; }
+.chat-textarea:focus { border-color: #ffffff; }
+.chat-textarea::placeholder { color: var(–text-muted); }
+.send-btn { background: #ffffff; border: none; color: #000000; border-radius: 50%; width: 36px; height: 36px; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+
+#ai-input-panel {
+position: fixed; left: 0; right: 0; bottom: 0; z-index: 20;
+display: none;
+background: var(–surface); border-top: 1px solid var(–border);
+padding: 10px 12px;
+padding-bottom: max(10px, env(safe-area-inset-bottom));
+}
+#ai-input-panel.visible { display: block; }
+.ai-input-header { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.ai-input-label { font-size: 12px; color: var(–accent); font-weight: 500; flex: 1; }
+.ai-cancel-btn { background: none; border: none; color: var(–text-muted); font-size: 13px; cursor: pointer; font-family: inherit; padding: 2px 8px; }
+.ai-save-btn { background: var(–accent); border: none; color: #fff; border-radius: 12px; padding: 5px 14px; font-size: 13px; cursor: pointer; font-family: inherit; }
+.ai-rich-input { width: 100%; min-height: 80px; max-height: 220px; background: var(–surface2); border: 1px solid var(–accent); border-radius: 12px; padding: 10px 14px; color: var(–text); font-size: 16px; font-family: -apple-system, ‘Hiragino Sans’, ‘Hiragino Kaku Gothic ProN’, sans-serif; outline: none; resize: none; line-height: 1.35; overflow-y: auto; }
+.ai-rich-input::placeholder { color: var(–text-muted); }
+
+/* MODALS */
+.overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 100; align-items: flex-end; justify-content: center; }
+.overlay.open { display: flex; }
+.modal { background: var(–surface2); border-top: 1px solid var(–border); border-radius: 20px 20px 0 0; width: 100%; max-width: 600px; padding: 20px 16px 32px; display: flex; flex-direction: column; gap: 12px; max-height: 80dvh; overflow-y: auto; }
+.modal h2 { font-size: 15px; font-weight: 500; text-align: center; }
+.modal input { width: 100%; background: var(–bg); border: 1px solid var(–border); border-radius: 10px; padding: 9px 12px; color: var(–text); font-size: 16px; font-family: inherit; outline: none; }
+.modal input:focus { border-color: var(–accent); }
+.modal-actions { display: flex; gap: 8px; }
+.btn-cancel { flex: 1; padding: 11px; border-radius: 10px; border: 1px solid var(–border); background: transparent; color: var(–text-muted); font-family: inherit; font-size: 13px; cursor: pointer; }
+.btn-save { flex: 2; padding: 11px; border-radius: 10px; border: none; background: var(–accent); color: #fff; font-family: inherit; font-size: 13px; font-weight: 500; cursor: pointer; }
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-thumb { background: var(–border); border-radius: 4px; }
 </style>
+
 </head>
 <body>
+
+<!-- LIST VIEW -->
 
 <div id="list-view">
   <div class="list-header">
     <h1>AI Log</h1>
-    <button class="header-btn" onclick="exportData()" title="エクスポート">↑</button>
-    <button class="header-btn" onclick="importData()" title="インポート">↓</button>
+    <button class="header-btn" onclick="exportData()">↑</button>
+    <button class="header-btn" onclick="importData()">↓</button>
     <button class="header-btn" onclick="newConv()">＋ 新規</button>
   </div>
   <input type="file" id="importFile" accept=".json" style="display:none" onchange="handleImport(event)">
@@ -104,48 +143,56 @@
   <div id="list-panel"></div>
 </div>
 
-<div id="chat-view">
-  <div class="chat-header">
-    <button class="back-btn" onclick="backToList()">←</button>
-    <div class="chat-title-wrap">
-      <span id="chatTitle" onclick="openTitleModal()"></span>
-      <span id="chatBadge" class="conv-badge" onclick="toggleAI()"></span>
-    </div>
-    <button class="header-btn" onclick="newConvFromChat()">＋ 新規</button>
-  </div>
-  <div class="messages" id="messages"></div>
+<!-- CHAT HEADER (独立fixed) -->
 
-  <div class="chat-input-wrap" id="userInputWrap">
-    <div class="chat-input-row">
-      <button class="role-toggle-btn" onclick="switchToAIMode()">自分</button>
-      <textarea class="chat-textarea" id="chatInput" placeholder="メッセージ..." rows="1" oninput="autoResize(this)"></textarea>
-      <button class="send-btn" onclick="sendMessage()">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
-      </button>
-    </div>
+<div id="chat-header">
+  <button class="back-btn" onclick="backToList()">←</button>
+  <div class="chat-title-wrap">
+    <span id="chatTitle" onclick="openTitleModal()"></span>
+    <span id="chatBadge" class="conv-badge" onclick="toggleAI()"></span>
   </div>
+  <button class="header-btn" onclick="newConvFromChat()">＋ 新規</button>
+</div>
 
-  <div class="ai-input-wrap" id="aiInputWrap">
-    <div class="ai-input-header">
-      <span class="ai-input-label">AI の返答</span>
-      <button class="ai-cancel-btn" onclick="switchToUserMode()">キャンセル</button>
-      <button class="ai-save-btn" onclick="saveAIMessage()">追加</button>
-    </div>
-    <textarea class="ai-rich-input" id="aiRichInput" placeholder="AIの返答をペースト..." rows="3"></textarea>
+<!-- MESSAGES (独立fixed) -->
+
+<div id="messages"></div>
+
+<!-- USER INPUT (独立fixed bottom) -->
+
+<div id="input-panel">
+  <div class="chat-input-row">
+    <button class="role-toggle-btn" onclick="switchToAIMode()">自分</button>
+    <textarea class="chat-textarea" id="chatInput" placeholder="メッセージ..." rows="1" oninput="autoResize(this)"></textarea>
+    <button class="send-btn" onclick="sendMessage()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+    </button>
   </div>
 </div>
+
+<!-- AI INPUT (独立fixed bottom) -->
+
+<div id="ai-input-panel">
+  <div class="ai-input-header">
+    <span class="ai-input-label">AI の返答</span>
+    <button class="ai-cancel-btn" onclick="switchToUserMode()">キャンセル</button>
+    <button class="ai-save-btn" onclick="saveAIMessage()">追加</button>
+  </div>
+  <textarea class="ai-rich-input" id="aiRichInput" placeholder="AIの返答をペースト..." rows="3"></textarea>
+</div>
+
+<!-- MODALS -->
 
 <div class="overlay" id="titleOverlay">
   <div class="modal">
     <h2>タイトルを編集</h2>
-    <div><input type="text" id="titleInput" placeholder="タイトル"></div>
+    <input type="text" id="titleInput" placeholder="タイトル">
     <div class="modal-actions">
       <button class="btn-cancel" onclick="closeTitleModal()">キャンセル</button>
       <button class="btn-save" onclick="saveTitle()">保存</button>
     </div>
   </div>
 </div>
-
 <div class="overlay" id="deleteMsgOverlay">
   <div class="modal">
     <h2>メッセージを操作</h2>
@@ -156,11 +203,10 @@
     </div>
   </div>
 </div>
-
 <div class="overlay" id="editMsgOverlay">
   <div class="modal">
     <h2>メッセージを編集</h2>
-    <div><textarea id="editMsgInput" style="width:100%;min-height:240px;background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:9px 12px;color:var(--text);font-size:16px;font-family:inherit;outline:none;resize:none;line-height:1.4;" placeholder="メッセージ..."></textarea></div>
+    <textarea id="editMsgInput" style="width:100%;min-height:240px;background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:9px 12px;color:var(--text);font-size:16px;font-family:inherit;outline:none;resize:none;line-height:1.4;" placeholder="メッセージ..."></textarea>
     <div class="modal-actions">
       <button class="btn-cancel" onclick="closeEditMsgModal()">キャンセル</button>
       <button class="btn-save" onclick="saveEditMsg()">保存</button>
@@ -170,49 +216,59 @@
 
 <script>
 const KEY = 'ailog_v1';
-let convs = [];
-let currentId = null;
-let lastConvId = null;
-let sortMode = 'created';
-
-let aiRichHtml = '';
+let convs = [], currentId = null, lastConvId = null, sortMode = 'created', aiRichHtml = '', inChat = false;
 try { convs = JSON.parse(localStorage.getItem(KEY)) || []; } catch(e) {}
 
 function persist() { localStorage.setItem(KEY, JSON.stringify(convs)); }
 function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
+function showChatUI() {
+  document.getElementById('chat-header').classList.add('visible');
+  document.getElementById('messages').classList.add('visible');
+  document.getElementById('input-panel').classList.add('visible');
+  document.getElementById('ai-input-panel').classList.remove('visible');
+}
+function hideChatUI() {
+  document.getElementById('chat-header').classList.remove('visible');
+  document.getElementById('messages').classList.remove('visible');
+  document.getElementById('input-panel').classList.remove('visible');
+  document.getElementById('ai-input-panel').classList.remove('visible');
+}
+
 function switchToAIMode() {
-  document.getElementById('userInputWrap').style.display = 'none';
-  document.getElementById('aiInputWrap').classList.add('active');
+  document.getElementById('input-panel').classList.remove('visible');
+  document.getElementById('ai-input-panel').classList.add('visible');
   const ri = document.getElementById('aiRichInput');
-  ri.value = '';
-  aiRichHtml = '';
-  ri.focus();
+  ri.value = ''; aiRichHtml = ''; ri.focus();
 }
-
 function switchToUserMode() {
-  document.getElementById('userInputWrap').style.display = '';
+  document.getElementById('ai-input-panel').classList.remove('visible');
+  document.getElementById('input-panel').classList.add('visible');
   document.getElementById('chatInput').focus();
-  document.getElementById('aiInputWrap').classList.remove('active');
 }
-
 function autoResize(el) {
   el.style.height = 'auto';
   el.style.height = Math.min(el.scrollHeight, 140) + 'px';
 }
-
 function sendMessage() {
   const input = document.getElementById('chatInput');
   const text = input.value.trim();
   if (!text || !currentId) return;
-  const c = convs.find(x => x.id === currentId);
-  if (!c) return;
+  const c = convs.find(x => x.id === currentId); if (!c) return;
   c.messages.push({ role: 'user', text });
   c.updatedAt = Date.now();
-  input.value = '';
-  input.style.height = 'auto';
-  renderMessages(c);
-  switchToAIMode();
+  input.value = ''; input.style.height = 'auto';
+  renderMessages(c); switchToAIMode();
+}
+function saveAIMessage() {
+  const el = document.getElementById('aiRichInput');
+  const raw = aiRichHtml || el.value.trim();
+  const text = normalizeAIHtml(raw);
+  if (!text || !currentId) { switchToUserMode(); return; }
+  const c = convs.find(x => x.id === currentId); if (!c) { switchToUserMode(); return; }
+  c.messages.push({ role: 'ai', text });
+  c.updatedAt = Date.now(); aiRichHtml = '';
+  renderMessages(c); switchToUserMode();
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -223,102 +279,82 @@ document.addEventListener('DOMContentLoaded', () => {
     const html = e.clipboardData.getData('text/html');
     if (html) aiRichHtml = html;
   });
-
-  // チャット画面で右スワイプ→リストに戻る
-  let swipeStartX = 0, swipeStartY = 0;
-  const chatView = document.getElementById('chat-view');
-  chatView.addEventListener('touchstart', e => {
-    swipeStartX = e.touches[0].clientX;
-    swipeStartY = e.touches[0].clientY;
-  }, { passive: true });
-  chatView.addEventListener('touchend', e => {
-    const dx = e.changedTouches[0].clientX - swipeStartX;
-    const dy = e.changedTouches[0].clientY - swipeStartY;
-    if (dx > 60 && Math.abs(dy) < 60) {
-      backToList();
-    }
+  // 右スワイプでリストへ
+  let sx = 0, sy = 0;
+  document.addEventListener('touchstart', e => { sx = e.touches[0].clientX; sy = e.touches[0].clientY; }, { passive: true });
+  document.addEventListener('touchend', e => {
+    if (!inChat) return;
+    const dx = e.changedTouches[0].clientX - sx;
+    const dy = e.changedTouches[0].clientY - sy;
+    if (dx > 60 && Math.abs(dy) < 60) backToList();
   }, { passive: true });
 });
 
-function saveAIMessage() {
-  const el = document.getElementById('aiRichInput');
-  const raw = aiRichHtml || el.value.trim();
-  const text = normalizeAIHtml(raw);
-  if (!text || !currentId) { switchToUserMode(); return; }
-  const c = convs.find(x => x.id === currentId);
-  if (!c) { switchToUserMode(); return; }
-  c.messages.push({ role: 'ai', text });
-  c.updatedAt = Date.now();
-  aiRichHtml = '';
-  renderMessages(c);
-  switchToUserMode();
-}
-
 function exportData() {
-  const json = JSON.stringify(convs, null, 2);
-  const blob = new Blob([json], { type: 'application/json' });
+  const blob = new Blob([JSON.stringify(convs, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
+  const a = document.createElement('a'); a.href = url;
   a.download = 'ailog_backup_' + new Date().toISOString().slice(0,10) + '.json';
-  a.click();
-  URL.revokeObjectURL(url);
+  a.click(); URL.revokeObjectURL(url);
 }
-
-function importData() {
-  document.getElementById('importFile').click();
-}
-
+function importData() { document.getElementById('importFile').click(); }
 function handleImport(e) {
-  const file = e.target.files[0];
-  if (!file) return;
+  const file = e.target.files[0]; if (!file) return;
   const reader = new FileReader();
-  reader.onload = function(ev) {
+  reader.onload = ev => {
     try {
       const imported = JSON.parse(ev.target.result);
       if (!Array.isArray(imported)) throw new Error();
-      convs = imported;
-      persist();
-      renderList();
+      convs = imported; persist(); renderList();
       alert(imported.length + '件の会話をインポートしました');
-    } catch {
-      alert('インポートに失敗しました');
-    }
+    } catch { alert('インポートに失敗しました'); }
     e.target.value = '';
   };
   reader.readAsText(file);
 }
 
+function openConvUI(id) {
+  currentId = id; inChat = true;
+  const c = convs.find(x => x.id === id);
+  document.getElementById('chatTitle').textContent = c.title;
+  const badge = document.getElementById('chatBadge');
+  badge.textContent = c.ai === 'grok' ? 'Grok' : 'Claude';
+  badge.className = 'conv-badge ' + (c.ai === 'grok' ? 'badge-grok' : 'badge-claude');
+  const msgs = document.getElementById('messages');
+  msgs.className = 'visible bg-' + c.ai;
+  showChatUI(); renderMessages(c);
+}
+
 function newConv() {
   const id = Date.now().toString();
   convs.push({ id, title: '新しい会話', ai: 'grok', messages: [], createdAt: Date.now() });
-  persist();
-  currentId = id;
-  const c = convs.find(x => x.id === id);
-  document.getElementById('chatTitle').textContent = c.title;
-  document.getElementById('chatBadge').textContent = 'Grok';
-  document.getElementById('chatBadge').className = 'conv-badge badge-grok';
-  document.getElementById('aiInputWrap').classList.remove('active');
-  document.getElementById('userInputWrap').style.display = '';
-  renderMessages(c);
-  fadeSwitch(document.getElementById('list-view'), document.getElementById('chat-view'), () => {
-    document.getElementById('chatInput').focus();
-  });
+  persist(); openConvUI(id);
+  const lv = document.getElementById('list-view');
+  lv.style.transition = 'opacity 0.12s'; lv.style.opacity = '0';
+  setTimeout(() => { lv.style.display = 'none'; lv.style.opacity = ''; lv.style.transition = ''; document.getElementById('chatInput').focus(); }, 120);
 }
-
 function newConvFromChat() {
   const id = Date.now().toString();
   convs.push({ id, title: '新しい会話', ai: 'grok', messages: [], createdAt: Date.now() });
-  persist();
-  currentId = id;
-  const c = convs.find(x => x.id === id);
-  document.getElementById('chatTitle').textContent = c.title;
-  document.getElementById('chatBadge').textContent = 'Grok';
-  document.getElementById('chatBadge').className = 'conv-badge badge-grok';
-  document.getElementById('aiInputWrap').classList.remove('active');
-  document.getElementById('userInputWrap').style.display = '';
-  document.getElementById('chatInput').focus();
-  renderMessages(c);
+  persist(); openConvUI(id); document.getElementById('chatInput').focus();
+}
+
+function openConv(id) {
+  const c = convs.find(x => x.id === id); if (!c) return;
+  c.openedAt = Date.now(); persist(); openConvUI(id);
+  const lv = document.getElementById('list-view');
+  lv.style.transition = 'opacity 0.12s'; lv.style.opacity = '0';
+  setTimeout(() => { lv.style.display = 'none'; lv.style.opacity = ''; lv.style.transition = ''; }, 120);
+}
+function backToList() {
+  lastConvId = currentId; inChat = false; hideChatUI();
+  const lv = document.getElementById('list-view');
+  lv.style.display = 'flex'; lv.style.opacity = '0';
+  renderList();
+  requestAnimationFrame(() => {
+    lv.style.transition = 'opacity 0.12s'; lv.style.opacity = '1';
+    setTimeout(() => { lv.style.transition = ''; }, 130);
+  });
 }
 
 function openTitleModal() {
@@ -329,40 +365,17 @@ function openTitleModal() {
 }
 function closeTitleModal() { document.getElementById('titleOverlay').classList.remove('open'); }
 function saveTitle() {
-  const t = document.getElementById('titleInput').value.trim();
-  if (!t) { closeTitleModal(); return; }
+  const t = document.getElementById('titleInput').value.trim(); if (!t) { closeTitleModal(); return; }
   const c = convs.find(x => x.id === currentId); if (!c) { closeTitleModal(); return; }
-  c.title = t;
-  persist();
-  document.getElementById('chatTitle').textContent = t;
-  closeTitleModal();
-  renderList();
+  c.title = t; persist(); document.getElementById('chatTitle').textContent = t; closeTitleModal(); renderList();
 }
-
 function toggleAI() {
   const c = convs.find(x => x.id === currentId); if (!c) return;
-  c.ai = c.ai === 'grok' ? 'claude' : 'grok';
-  persist();
+  c.ai = c.ai === 'grok' ? 'claude' : 'grok'; persist();
   const badge = document.getElementById('chatBadge');
   badge.textContent = c.ai === 'grok' ? 'Grok' : 'Claude';
   badge.className = 'conv-badge ' + (c.ai === 'grok' ? 'badge-grok' : 'badge-claude');
-  document.getElementById('messages').className = 'messages bg-' + c.ai;
-}
-
-function deleteConv() {
-  if (!currentId) return;
-  if (!confirm('この会話を削除しますか？')) return;
-  convs = convs.filter(c => c.id !== currentId);
-  persist();
-  currentId = null;
-  backToList();
-}
-
-function deleteConvById(id) {
-  if (!confirm('この会話を削除しますか？')) return;
-  convs = convs.filter(c => c.id !== id);
-  persist();
-  renderList();
+  document.getElementById('messages').className = 'visible bg-' + c.ai;
 }
 
 function renderList() {
@@ -370,14 +383,9 @@ function renderList() {
   const panel = document.getElementById('list-panel');
   const filtered = convs.filter(c => !q || c.title.toLowerCase().includes(q) || c.messages.some(m => m.text.toLowerCase().includes(q)));
   if (!filtered.length) { panel.innerHTML = '<div class="empty-list">会話がまだないか、<br>検索結果なし</div>'; return; }
-  const sorted = filtered.slice().sort((a, b) => {
-    if (sortMode === 'updated') return (b.updatedAt || b.createdAt || 0) - (a.updatedAt || a.createdAt || 0);
-    if (sortMode === 'opened') return (b.openedAt || b.createdAt || 0) - (a.openedAt || a.createdAt || 0);
-    return (b.createdAt || 0) - (a.createdAt || 0);
-  });
+  const sorted = filtered.slice().sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
   panel.innerHTML = sorted.map(c => {
-    const rawPreview = c.messages[0]?.text || '';
-    const preview = rawPreview.replace(/<[^>]*>/g, '').slice(0, 40);
+    const preview = (c.messages[0]?.text || '').replace(/<[^>]*>/g, '').slice(0, 40);
     const bl = c.ai === 'grok' ? 'badge-grok' : 'badge-claude';
     const lb = c.ai === 'grok' ? 'Grok' : 'Claude';
     const dt = new Date(c.createdAt).toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric' });
@@ -386,173 +394,80 @@ function renderList() {
   initSwipe();
 }
 
-function fadeSwitch(hideEl, showEl, cb) {
-  hideEl.style.transition = 'opacity 0.12s';
-  hideEl.style.opacity = '0';
-  setTimeout(() => {
-    hideEl.style.display = 'none';
-    hideEl.style.opacity = '';
-    hideEl.style.transition = '';
-    showEl.style.display = 'flex';
-    showEl.style.opacity = '0';
-    if (cb) cb();
-    requestAnimationFrame(() => {
-      showEl.style.transition = 'opacity 0.12s';
-      showEl.style.opacity = '1';
-      setTimeout(() => { showEl.style.transition = ''; showEl.style.opacity = ''; }, 130);
-    });
-  }, 120);
-}
+// リスト画面左スワイプで前の会話へ
+let lsx = 0, lsy = 0;
+document.getElementById('list-view').addEventListener('touchstart', e => { lsx = e.touches[0].clientX; lsy = e.touches[0].clientY; }, { passive: true });
+document.getElementById('list-view').addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - lsx, dy = e.changedTouches[0].clientY - lsy;
+  if (dx < -60 && Math.abs(dy) < 60 && lastConvId) openConv(lastConvId);
+}, { passive: true });
 
-function openConv(id) {
-  currentId = id;
-  const c = convs.find(x => x.id === id); if (!c) return;
-  c.openedAt = Date.now();
-  persist();
-  const listView = document.getElementById('list-view');
-  const chatView = document.getElementById('chat-view');
-  document.getElementById('chatTitle').textContent = c.title;
-  const badge = document.getElementById('chatBadge');
-  badge.textContent = c.ai === 'grok' ? 'Grok' : 'Claude';
-  badge.className = 'conv-badge ' + (c.ai === 'grok' ? 'badge-grok' : 'badge-claude');
-  document.getElementById('aiInputWrap').classList.remove('active');
-  document.getElementById('userInputWrap').style.display = '';
-  renderMessages(c);
-  fadeSwitch(listView, chatView);
-}
-
-let deleteMsgIndex = null;
-let deleteMsgRow = null;
-
-function openDeleteMsgModal(idx, row) {
-  deleteMsgIndex = idx;
-  deleteMsgRow = row;
-  document.getElementById('deleteMsgOverlay').classList.add('open');
-}
+// メッセージ長押し
+let deleteMsgIndex = null, deleteMsgRow = null;
+function openDeleteMsgModal(idx, row) { deleteMsgIndex = idx; deleteMsgRow = row; document.getElementById('deleteMsgOverlay').classList.add('open'); }
 function closeDeleteMsgModal() {
-  if (deleteMsgRow) {
-    const bubble = deleteMsgRow.querySelector('.bubble');
-    bubble.style.transform = '';
-    bubble.style.transition = '';
-    deleteMsgRow = null;
-  }
-  deleteMsgIndex = null;
-  document.getElementById('deleteMsgOverlay').classList.remove('open');
+  if (deleteMsgRow) { const b = deleteMsgRow.querySelector('.bubble'); b.style.transform = ''; b.style.transition = ''; deleteMsgRow = null; }
+  deleteMsgIndex = null; document.getElementById('deleteMsgOverlay').classList.remove('open');
 }
 function copyMsg() {
-  const c = convs.find(x => x.id === currentId);
-  if (!c || deleteMsgIndex === null) { closeDeleteMsgModal(); return; }
+  const c = convs.find(x => x.id === currentId); if (!c || deleteMsgIndex === null) { closeDeleteMsgModal(); return; }
   const html = c.messages[deleteMsgIndex].text;
-  const tmp = document.createElement('div');
-  tmp.innerHTML = html;
+  const tmp = document.createElement('div'); tmp.innerHTML = html;
   const plain = tmp.textContent || tmp.innerText || '';
   try {
-    const item = new ClipboardItem({
-      'text/html': new Blob([html], { type: 'text/html' }),
-      'text/plain': new Blob([plain], { type: 'text/plain' })
-    });
-    navigator.clipboard.write([item]).then(() => closeDeleteMsgModal()).catch(() => {
-      navigator.clipboard.writeText(plain).then(() => closeDeleteMsgModal());
-    });
-  } catch(e) {
-    navigator.clipboard.writeText(plain).then(() => closeDeleteMsgModal());
-  }
+    navigator.clipboard.write([new ClipboardItem({ 'text/html': new Blob([html], { type: 'text/html' }), 'text/plain': new Blob([plain], { type: 'text/plain' }) })]).then(() => closeDeleteMsgModal()).catch(() => navigator.clipboard.writeText(plain).then(() => closeDeleteMsgModal()));
+  } catch(e) { navigator.clipboard.writeText(plain).then(() => closeDeleteMsgModal()); }
 }
-
 function openEditMsgModal() {
-  const c = convs.find(x => x.id === currentId);
-  if (!c || deleteMsgIndex === null) return;
-  const text = c.messages[deleteMsgIndex].text;
-  const tmp = document.createElement('div');
-  tmp.innerHTML = text;
-  document.getElementById('editMsgInput').value = tmp.textContent || tmp.innerText || text;
+  const c = convs.find(x => x.id === currentId); if (!c || deleteMsgIndex === null) return;
+  const tmp = document.createElement('div'); tmp.innerHTML = c.messages[deleteMsgIndex].text;
+  document.getElementById('editMsgInput').value = tmp.textContent || tmp.innerText || c.messages[deleteMsgIndex].text;
   document.getElementById('deleteMsgOverlay').classList.remove('open');
   document.getElementById('editMsgOverlay').classList.add('open');
 }
-function closeEditMsgModal() {
-  document.getElementById('editMsgOverlay').classList.remove('open');
-  closeDeleteMsgModal();
-}
+function closeEditMsgModal() { document.getElementById('editMsgOverlay').classList.remove('open'); closeDeleteMsgModal(); }
 function saveEditMsg() {
-  const c = convs.find(x => x.id === currentId);
-  if (!c || deleteMsgIndex === null) { closeEditMsgModal(); return; }
-  const newText = document.getElementById('editMsgInput').value.trim();
-  if (!newText) { closeEditMsgModal(); return; }
-  c.messages[deleteMsgIndex].text = newText;
-  persist();
-  const msgs = document.getElementById('messages');
-  const scrollPos = msgs.scrollTop;
-  closeEditMsgModal();
-  renderMessages(c, scrollPos);
+  const c = convs.find(x => x.id === currentId); if (!c || deleteMsgIndex === null) { closeEditMsgModal(); return; }
+  const newText = document.getElementById('editMsgInput').value.trim(); if (!newText) { closeEditMsgModal(); return; }
+  c.messages[deleteMsgIndex].text = newText; persist();
+  const msgs = document.getElementById('messages'); const sp = msgs.scrollTop;
+  closeEditMsgModal(); renderMessages(c, sp);
 }
-
 function confirmDeleteMsg() {
   if (deleteMsgIndex === null || !currentId) { closeDeleteMsgModal(); return; }
-  const c = convs.find(x => x.id === currentId);
-  if (!c) { closeDeleteMsgModal(); return; }
-  c.messages.splice(deleteMsgIndex, 1);
-  persist();
-  closeDeleteMsgModal();
-  renderMessages(c);
+  const c = convs.find(x => x.id === currentId); if (!c) { closeDeleteMsgModal(); return; }
+  c.messages.splice(deleteMsgIndex, 1); persist(); closeDeleteMsgModal(); renderMessages(c);
 }
 
 function renderMessages(c, scrollPos) {
   const msgs = document.getElementById('messages');
-  msgs.className = 'messages bg-' + c.ai;
   msgs.innerHTML = c.messages.map((m, i) => {
     if (m.role === 'ai') return `<div class="msg-row ai" data-index="${i}"><div class="bubble ai-rich">${renderAI(m.text)}</div></div>`;
     return `<div class="msg-row user" data-index="${i}"><div class="bubble">${esc(m.text)}</div></div>`;
   }).join('');
-  if (scrollPos !== undefined) {
-    msgs.scrollTop = scrollPos;
-  } else {
-    msgs.scrollTop = msgs.scrollHeight;
-  }
+  if (scrollPos !== undefined) msgs.scrollTop = scrollPos;
+  else msgs.scrollTop = msgs.scrollHeight;
 
   msgs.querySelectorAll('.msg-row').forEach(row => {
-    let timer;
-    let activated = false;
+    let timer, activated = false;
     row.addEventListener('touchstart', () => {
       activated = false;
       timer = setTimeout(() => {
         activated = true;
-        const bubble = row.querySelector('.bubble');
-        const scaleVal = row.classList.contains('user') ? 'scale(1.04)' : 'scale(1.02)';
-        bubble.style.transition = 'transform 0.15s';
-        bubble.style.transform = scaleVal;
-        setTimeout(() => {
-          openDeleteMsgModal(parseInt(row.dataset.index), row);
-        }, 75);
+        const b = row.querySelector('.bubble');
+        b.style.transition = 'transform 0.15s';
+        b.style.transform = row.classList.contains('user') ? 'scale(1.04)' : 'scale(1.02)';
+        setTimeout(() => openDeleteMsgModal(parseInt(row.dataset.index), row), 75);
       }, 600);
     }, { passive: true });
-    row.addEventListener('touchend', () => {
-      clearTimeout(timer);
-      if (!activated) {
-        const bubble = row.querySelector('.bubble');
-        bubble.style.filter = '';
-        bubble.style.opacity = '';
-      }
-    }, { passive: true });
-    row.addEventListener('touchmove', () => {
-      clearTimeout(timer);
-      activated = false;
-      const bubble = row.querySelector('.bubble');
-      bubble.style.filter = '';
-      bubble.style.opacity = '';
-    }, { passive: true });
+    row.addEventListener('touchend', () => { clearTimeout(timer); }, { passive: true });
+    row.addEventListener('touchmove', () => { clearTimeout(timer); activated = false; }, { passive: true });
   });
-}
-
-function backToList() {
-  lastConvId = currentId;
-  fadeSwitch(document.getElementById('chat-view'), document.getElementById('list-view'), renderList);
 }
 
 function renderAI(text) {
   text = normalizeAIHtml(text);
-  if (/<(h[1-6]|ul|ol|li|p|div|br)[^>]*>/i.test(text)) {
-    const tmp = document.createElement('div'); tmp.innerHTML = text; return tmp.innerHTML;
-  }
+  if (/<(h[1-6]|ul|ol|li|p|div|br)[^>]*>/i.test(text)) { const tmp = document.createElement('div'); tmp.innerHTML = text; return tmp.innerHTML; }
   return text.split('\n').map(line => {
     if (/^### /.test(line)) return '<h3>' + line.replace(/^### /, '') + '</h3>';
     if (/^## /.test(line)) return '<h2>' + line.replace(/^## /, '') + '</h2>';
@@ -562,22 +477,18 @@ function renderAI(text) {
     return line ? '<p>' + line + '</p>' : '';
   }).join('');
 }
-
 function normalizeAIHtml(html) {
   html = html.replace(/(<br\s*\/?>)/gi, '</p><p>');
-  const tmp = document.createElement('div');
-  tmp.innerHTML = html;
+  const tmp = document.createElement('div'); tmp.innerHTML = html;
   tmp.querySelectorAll('[style]').forEach(el => el.removeAttribute('style'));
   tmp.querySelectorAll('p').forEach(el => { if (!el.textContent.trim()) el.remove(); });
   tmp.querySelectorAll('p, div').forEach(el => {
     const children = Array.from(el.childNodes).filter(n => !(n.nodeType === 3 && n.textContent.trim() === ''));
     if (children.length === 1) {
       const child = children[0];
-      if (child.nodeName === 'STRONG' || child.nodeName === 'B' || child.nodeName === 'SPAN') {
+      if (['STRONG','B','SPAN'].includes(child.nodeName)) {
         const text = child.textContent.trim();
-        const endsWithPunct = /[。、！？!?」』】]$/.test(text);
-        const containsQuotes = /[「」『』]/.test(text);
-        if (text.length < 60 && !endsWithPunct && !containsQuotes) {
+        if (text.length < 60 && !/[。、！？!?」』】]$/.test(text) && !/[「」『』]/.test(text)) {
           const h2 = document.createElement('h2'); h2.textContent = text; el.replaceWith(h2);
         }
       }
@@ -596,101 +507,28 @@ function initSwipe() {
     const delBtn = row.querySelector('.delete-btn');
     const id = row.dataset.id;
     let startX = 0, startY = 0, currentX = 0, moved = false;
-
-    item.addEventListener('click', () => {
-      if (!moved) openConv(id);
-    });
-
-    delBtn.addEventListener('click', () => {
-      convs = convs.filter(c => c.id !== id);
-      persist();
-      renderList();
-    });
-
-    row.addEventListener('touchstart', e => {
-      startX = e.touches[0].clientX;
-      startY = e.touches[0].clientY;
-      currentX = 0;
-      moved = false;
-    }, { passive: true });
-
+    item.addEventListener('click', () => { if (!moved) openConv(id); });
+    delBtn.addEventListener('click', () => { convs = convs.filter(c => c.id !== id); persist(); renderList(); });
+    row.addEventListener('touchstart', e => { startX = e.touches[0].clientX; startY = e.touches[0].clientY; currentX = 0; moved = false; }, { passive: true });
     row.addEventListener('touchmove', e => {
-      const dx = e.touches[0].clientX - startX;
-      const dy = e.touches[0].clientY - startY;
+      const dx = e.touches[0].clientX - startX, dy = e.touches[0].clientY - startY;
       if (Math.abs(dy) > Math.abs(dx)) return;
-      if (dx < 0) {
-        moved = true;
-        currentX = Math.max(dx, -80);
-        item.style.transition = 'none';
-        item.style.transform = `translateX(${currentX}px)`;
-        delBtn.style.transition = 'none';
-        delBtn.style.right = `${-80 - currentX}px`;
-      }
+      if (dx < 0) { moved = true; currentX = Math.max(dx, -80); item.style.transition = 'none'; item.style.transform = `translateX(${currentX}px)`; delBtn.style.transition = 'none'; delBtn.style.right = `${-80 - currentX}px`; }
     }, { passive: true });
-
     row.addEventListener('touchend', () => {
-      item.style.transition = 'transform 0.2s';
-      delBtn.style.transition = 'right 0.2s';
-      if (currentX < -40) {
-        item.style.transform = 'translateX(-80px)';
-        delBtn.style.right = '0px';
-      } else {
-        item.style.transform = '';
-        delBtn.style.right = '-80px';
-        moved = false;
-      }
+      item.style.transition = 'transform 0.2s'; delBtn.style.transition = 'right 0.2s';
+      if (currentX < -40) { item.style.transform = 'translateX(-80px)'; delBtn.style.right = '0px'; }
+      else { item.style.transform = ''; delBtn.style.right = '-80px'; moved = false; }
     });
   });
-
   document.getElementById('list-panel').addEventListener('touchstart', e => {
     document.querySelectorAll('.conv-row').forEach(row => {
-      if (!row.contains(e.target)) {
-        const item = row.querySelector('.conv-item');
-        const delBtn = row.querySelector('.delete-btn');
-        item.style.transition = 'transform 0.2s';
-        item.style.transform = '';
-        delBtn.style.transition = 'right 0.2s';
-        delBtn.style.right = '-80px';
-      }
+      if (!row.contains(e.target)) { row.querySelector('.conv-item').style.cssText += 'transition:transform 0.2s;transform:none;'; row.querySelector('.delete-btn').style.cssText += 'transition:right 0.2s;right:-80px;'; }
     });
-  }, { passive: true });
-
-  let listSwipeStartX = 0, listSwipeStartY = 0;
-  const listView = document.getElementById('list-view');
-  listView.addEventListener('touchstart', e => {
-    listSwipeStartX = e.touches[0].clientX;
-    listSwipeStartY = e.touches[0].clientY;
-  }, { passive: true });
-  listView.addEventListener('touchend', e => {
-    const dx = e.changedTouches[0].clientX - listSwipeStartX;
-    const dy = e.changedTouches[0].clientY - listSwipeStartY;
-    if (dx < -60 && Math.abs(dy) < 60 && lastConvId) {
-      openConv(lastConvId);
-    }
   }, { passive: true });
 }
 
 renderList();
-
-// iOS Safari キーボード対策: visualViewport でチャット画面の高さを固定
-function applyViewport() {
-  const vv = window.visualViewport;
-  if (!vv) return;
-  const chatView = document.getElementById('chat-view');
-  const listView = document.getElementById('list-view');
-  const h = vv.height;
-  const offsetTop = vv.offsetTop;
-  chatView.style.top = offsetTop + 'px';
-  chatView.style.height = h + 'px';
-  listView.style.top = offsetTop + 'px';
-  listView.style.height = h + 'px';
-}
-
-if (window.visualViewport) {
-  window.visualViewport.addEventListener('resize', applyViewport);
-  window.visualViewport.addEventListener('scroll', applyViewport);
-  applyViewport();
-}
 </script>
 
 </body>
