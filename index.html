@@ -3,7 +3,7 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23e8e8f0' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z'/></svg>">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <title>AI Log</title>
@@ -533,41 +533,34 @@ function initSwipe() {
 renderList();
 
 // visualViewport でキーボード対策
-// will-change を事前に指定してGPUレイヤーに乗せておくことでカクつきを減らす
 (function() {
   const vv = window.visualViewport;
   if (!vv) return;
 
-  const targets = [
-    document.getElementById('chat-header'),
-    document.getElementById('messages'),
-    document.getElementById('input-panel'),
-    document.getElementById('ai-input-panel'),
-  ];
-  targets.forEach(el => { el.style.willChange = 'transform'; });
+  const inputPanel   = document.getElementById('input-panel');
+  const aiInputPanel = document.getElementById('ai-input-panel');
+  const chatHeader   = document.getElementById('chat-header');
+  const msgs         = document.getElementById('messages');
+
+  [inputPanel, aiInputPanel, chatHeader, msgs].forEach(el => {
+    if (el) el.style.willChange = 'transform';
+  });
 
   let ticking = false;
-  let lastH = vv.height;
-  let lastTop = vv.offsetTop;
 
   function apply() {
     ticking = false;
-    const h = vv.height;
-    const top = vv.offsetTop;
-    // 変化がなければスキップ
-    if (h === lastH && top === lastTop) return;
-    lastH = h; lastTop = top;
+    const offsetY = window.innerHeight - vv.height - vv.offsetTop;
+    // キーボードが出ているとき offsetY > 0
+    const shift = vv.offsetTop > 0 ? -vv.offsetTop : -offsetY;
 
-    targets.forEach(el => {
-      el.style.transform = `translateY(${top}px)`;
+    // 入力欄とヘッダーをキーボードの上に移動
+    [inputPanel, aiInputPanel, chatHeader].forEach(el => {
+      if (el) el.style.transform = offsetY > 0 ? `translateY(${-offsetY}px)` : '';
     });
 
-    // ヘッダーと入力欄の位置はtransformで動かしてるので
-    // messagesのpaddingBottomだけキーボード高さに応じて調整
-    const msgs = document.getElementById('messages');
-    const screenH = window.screen.height;
-    const kbH = Math.max(0, screenH - h - top);
-    msgs.style.paddingBottom = (kbH + 70) + 'px';
+    // メッセージ欄のpadding-bottomをキーボード高さ分確保
+    if (msgs) msgs.style.paddingBottom = offsetY > 0 ? (offsetY + 70) + 'px' : '70px';
   }
 
   function onVpChange() {
