@@ -8,10 +8,10 @@
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <title>AI Log</title>
 <style>
-  :root { --bg: #000000; --surface: #000000; --surface2: #111111; --border: #1a1a1a; --text: #e8e8f0; --text-muted: #707070; --accent: #5b8dee; }
+  :root { --bg: #000000; --surface: #000000; --surface2: #111111; --border: #1a1a1a; --text: #e8e8f0; --text-muted: #707070; --accent: #5b8dee; color-scheme: dark; }
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  button { -webkit-appearance: none; appearance: none; color: inherit; background: transparent; }
-  input, textarea { color: inherit; font-family: inherit; }
+  button { -webkit-appearance: none !important; appearance: none !important; color: var(--text) !important; -webkit-text-fill-color: var(--text) !important; }
+  input, textarea { -webkit-appearance: none !important; appearance: none !important; color: var(--text) !important; -webkit-text-fill-color: var(--text) !important; background-color: var(--bg) !important; }
   html, body { height: 100%; overflow: hidden; font-family: -apple-system, 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', sans-serif; background: var(--bg); color: var(--text); font-size: 14px; }
 
 /* LIST VIEW */
