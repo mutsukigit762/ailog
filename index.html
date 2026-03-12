@@ -13,7 +13,7 @@
   .btn-copy-msg { background:#ffffff !important; color:#000 !important; -webkit-text-fill-color:#000 !important; flex:2; border:none; border-radius:10px; padding:11px; font-family:inherit; font-size:13px; font-weight:500; cursor:pointer; }
   button { -webkit-appearance: none !important; appearance: none !important; color: var(--text) !important; -webkit-text-fill-color: var(--text) !important; }
   input, textarea { -webkit-appearance: none !important; appearance: none !important; color: var(--text) !important; -webkit-text-fill-color: var(--text) !important; background-color: var(--bg) !important; }
-  html, body { height: 100%; overflow: hidden; font-family: -apple-system, 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', sans-serif; background: #000000; color: var(--text); font-size: 14px; }
+  html, body { height: 100%; overflow: hidden; overscroll-behavior-x: none; font-family: -apple-system, 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', sans-serif; background: #000000; color: var(--text); font-size: 14px; }
 
 /* LIST VIEW */
 #list-view { position: fixed; inset: 0; display: flex; flex-direction: column; }
@@ -399,14 +399,6 @@ function renderList() {
   initSwipe();
 }
 
-// リスト画面左スワイプで前の会話へ
-let lsx = 0, lsy = 0;
-document.getElementById('list-view').addEventListener('touchstart', e => { lsx = e.touches[0].clientX; lsy = e.touches[0].clientY; }, { passive: true });
-document.getElementById('list-view').addEventListener('touchend', e => {
-  const dx = e.changedTouches[0].clientX - lsx, dy = e.changedTouches[0].clientY - lsy;
-  if (dx < -60 && Math.abs(dy) < 60 && lastConvId) openConv(lastConvId);
-}, { passive: true });
-
 // メッセージ長押し
 let deleteMsgIndex = null, deleteMsgRow = null;
 function openDeleteMsgModal(idx, row) { deleteMsgIndex = idx; deleteMsgRow = row; document.getElementById('deleteMsgOverlay').classList.add('open'); }
@@ -569,6 +561,18 @@ renderList();
 
   vv.addEventListener('resize', onVpChange);
   vv.addEventListener('scroll', onVpChange);
+})();
+
+// 右スワイプでリストへ
+(function() {
+  let sx = 0, sy = 0;
+  document.addEventListener('touchstart', e => { sx = e.touches[0].clientX; sy = e.touches[0].clientY; }, { passive: true });
+  document.addEventListener('touchend', e => {
+    if (!inChat) return;
+    const dx = e.changedTouches[0].clientX - sx;
+    const dy = e.changedTouches[0].clientY - sy;
+    if (dx > 60 && Math.abs(dy) < 60) backToList();
+  }, { passive: true });
 })();
 </script>
 
