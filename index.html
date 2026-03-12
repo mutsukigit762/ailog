@@ -529,6 +529,55 @@ function initSwipe() {
 }
 
 renderList();
+
+// visualViewport でキーボード対策
+// will-change を事前に指定してGPUレイヤーに乗せておくことでカクつきを減らす
+(function() {
+  const vv = window.visualViewport;
+  if (!vv) return;
+
+  const targets = [
+    document.getElementById('chat-header'),
+    document.getElementById('messages'),
+    document.getElementById('input-panel'),
+    document.getElementById('ai-input-panel'),
+  ];
+  targets.forEach(el => { el.style.willChange = 'transform'; });
+
+  let ticking = false;
+  let lastH = vv.height;
+  let lastTop = vv.offsetTop;
+
+  function apply() {
+    ticking = false;
+    const h = vv.height;
+    const top = vv.offsetTop;
+    // 変化がなければスキップ
+    if (h === lastH && top === lastTop) return;
+    lastH = h; lastTop = top;
+
+    targets.forEach(el => {
+      el.style.transform = `translateY(${top}px)`;
+    });
+
+    // ヘッダーと入力欄の位置はtransformで動かしてるので
+    // messagesのpaddingBottomだけキーボード高さに応じて調整
+    const msgs = document.getElementById('messages');
+    const screenH = window.screen.height;
+    const kbH = Math.max(0, screenH - h - top);
+    msgs.style.paddingBottom = (kbH + 70) + 'px';
+  }
+
+  function onVpChange() {
+    if (!ticking) {
+      requestAnimationFrame(apply);
+      ticking = true;
+    }
+  }
+
+  vv.addEventListener('resize', onVpChange);
+  vv.addEventListener('scroll', onVpChange);
+})();
 </script>
 
 </body>
