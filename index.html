@@ -4,20 +4,21 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="color-scheme" content="dark">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23e8e8f0' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z'/></svg>">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <title>AI Log</title>
 <style>
-  :root { --bg: #000000; --surface: #000000; --surface2: #111111; --border: #1a1a1a; --text: #e8e8f0; --text-muted: #707070; --accent: #5b8dee; color-scheme: dark; }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root { --bg: #000000; --surface: #000000; --surface2: #111111; --border: #1a1a1a; --text: #e8e8f0; --text-muted: #707070; --accent: #5b8dee; }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-appearance: none; appearance: none; }
+  button { -webkit-appearance: none; appearance: none; }
+  input, textarea, button, select { color: inherit; background: transparent; font-family: inherit; }
   html, body { height: 100%; overflow: hidden; font-family: -apple-system, 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', sans-serif; background: var(--bg); color: var(--text); font-size: 14px; }
 
 /* LIST VIEW */
 #list-view { position: fixed; inset: 0; display: flex; flex-direction: column; }
 .list-header { background: var(–surface); border-bottom: 1px solid var(–border); padding: 12px 16px; display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
 .list-header h1 { font-size: 22px; font-weight: 700; flex: 1; }
-.header-btn { background: var(–surface2); border: 1px solid var(–border); color: var(–text) !important; -webkit-text-fill-color: var(–text) !important; border-radius: 8px; padding: 6px 12px; font-size: 12px; cursor: pointer; font-family: inherit; -webkit-appearance: none; appearance: none; }
+.header-btn { background: var(–surface2); border: 1px solid var(–border); color: var(–text); border-radius: 8px; padding: 6px 12px; font-size: 12px; cursor: pointer; font-family: inherit; }
 .search-wrap { padding: 10px 12px; background: var(–surface); border-bottom: 1px solid var(–border); flex-shrink: 0; }
 .search-input { width: 100%; background: var(–bg); border: 1px solid var(–border); border-radius: 20px; padding: 7px 14px; color: var(–text); font-size: 16px; font-family: inherit; outline: none; }
 .search-input:focus { border-color: var(–accent); }
