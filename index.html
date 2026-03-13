@@ -393,12 +393,13 @@ function toggleAI() {
   badge.textContent = c.ai === 'grok' ? 'Grok' : 'Claude';
   badge.className = 'conv-badge ' + (c.ai === 'grok' ? 'badge-grok' : 'badge-claude');
   document.getElementById('messages').className = 'visible bg-' + c.ai;
-  const bgColor = c.ai === 'claude' ? 'linear-gradient(to bottom, transparent, rgba(38,38,36,0.75))' : 'linear-gradient(to bottom, transparent, rgba(0,0,0,0.75))';
   const hdr = document.getElementById('chat-header');
-  hdr.style.background = bgColor;
-  hdr.style.setProperty('--header-bg', bgColor);
-  document.getElementById('input-panel').style.background = bgColor;
-  document.getElementById('ai-input-panel').style.background = bgColor;
+  const hdrColor = c.ai === 'claude' ? '#262624' : '#000000';
+  const panelBg = c.ai === 'claude' ? 'linear-gradient(to bottom, transparent, rgba(38,38,36,0.75))' : 'linear-gradient(to bottom, transparent, rgba(0,0,0,0.75))';
+  hdr.style.background = hdrColor;
+  hdr.style.setProperty('--header-bg', hdrColor);
+  document.getElementById('input-panel').style.background = panelBg;
+  document.getElementById('ai-input-panel').style.background = panelBg;
 }
 
 function renderList() {
