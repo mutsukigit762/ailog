@@ -92,7 +92,7 @@ display: none; flex-direction: column; gap: 10px;
 #input-panel {
 position: fixed; left: 0; right: 0; bottom: 0; z-index: 20;
 display: none;
-background: linear-gradient(to bottom, transparent, rgba(0,0,0,0.75)); border-top: none;
+background: linear-gradient(to bottom, transparent, rgba(0,0,0,0.95)); border-top: none;
 padding: 10px 12px;
 padding-bottom: max(20px, calc(env(safe-area-inset-bottom) + 10px));
 }
@@ -107,7 +107,7 @@ padding-bottom: max(20px, calc(env(safe-area-inset-bottom) + 10px));
 #ai-input-panel {
 position: fixed; left: 0; right: 0; bottom: 0; z-index: 20;
 display: none;
-background: linear-gradient(to bottom, transparent, rgba(0,0,0,0.75)); border-top: none;
+background: linear-gradient(to bottom, transparent, rgba(0,0,0,0.95)); border-top: none;
 padding: 10px 12px;
 padding-bottom: max(20px, calc(env(safe-area-inset-bottom) + 10px));
 }
@@ -336,7 +336,7 @@ function openConvUI(id) {
   msgs.className = 'visible bg-' + c.ai;
   const hdr = document.getElementById('chat-header');
   const hdrColor = c.ai === 'claude' ? '#262624' : '#000000';
-  const panelBg = c.ai === 'claude' ? 'linear-gradient(to bottom, transparent, rgba(38,38,36,0.75))' : 'linear-gradient(to bottom, transparent, rgba(0,0,0,0.75))';
+  const panelBg = c.ai === 'claude' ? 'linear-gradient(to bottom, transparent, rgba(38,38,36,0.95))' : 'linear-gradient(to bottom, transparent, rgba(0,0,0,0.95))';
   hdr.style.background = hdrColor;
   hdr.style.setProperty('--header-bg', hdrColor);
   document.getElementById('input-panel').style.background = panelBg;
@@ -398,7 +398,7 @@ function toggleAI() {
   document.getElementById('messages').className = 'visible bg-' + c.ai;
   const hdr = document.getElementById('chat-header');
   const hdrColor = c.ai === 'claude' ? '#262624' : '#000000';
-  const panelBg = c.ai === 'claude' ? 'linear-gradient(to bottom, transparent, rgba(38,38,36,0.75))' : 'linear-gradient(to bottom, transparent, rgba(0,0,0,0.75))';
+  const panelBg = c.ai === 'claude' ? 'linear-gradient(to bottom, transparent, rgba(38,38,36,0.95))' : 'linear-gradient(to bottom, transparent, rgba(0,0,0,0.95))';
   hdr.style.background = hdrColor;
   hdr.style.setProperty('--header-bg', hdrColor);
   document.getElementById('input-panel').style.background = panelBg;
