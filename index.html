@@ -93,7 +93,7 @@ position: fixed; left: 0; right: 0; bottom: 0; z-index: 20;
 display: none;
 background: #000000; border-top: none;
 padding: 10px 12px;
-padding-bottom: max(10px, env(safe-area-inset-bottom));
+padding-bottom: max(20px, calc(env(safe-area-inset-bottom) + 10px));
 }
 #input-panel.visible { display: block; }
 .chat-input-row { display: flex; align-items: flex-end; gap: 8px; }
@@ -108,7 +108,7 @@ position: fixed; left: 0; right: 0; bottom: 0; z-index: 20;
 display: none;
 background: #000000; border-top: none;
 padding: 10px 12px;
-padding-bottom: max(10px, env(safe-area-inset-bottom));
+padding-bottom: max(20px, calc(env(safe-area-inset-bottom) + 10px));
 }
 #ai-input-panel.visible { display: block; }
 .ai-input-header { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
