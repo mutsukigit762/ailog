@@ -59,9 +59,9 @@ pointer-events: none; z-index: 9;
 
 /* MESSAGES - 完全独立fixed、上下paddingでヘッダーと入力欄を避ける */
 #messages {
-position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+position: fixed; top: 0; left: 0; right: -6px; bottom: 0;
 overflow-y: auto;
-padding: 56px 12px 160px;
+padding: 56px 12px 160px 12px;
 display: none; flex-direction: column; gap: 10px;
 -webkit-user-select: none; user-select: none;
 }
@@ -177,6 +177,7 @@ overflow: hidden;
 <!-- MESSAGES (独立fixed) -->
 
 <div id="messages"></div>
+<button id="scroll-bottom-btn" onclick="document.getElementById('messages').scrollTop=document.getElementById('messages').scrollHeight" style="display:none;position:fixed;right:16px;z-index:15;width:36px;height:36px;border-radius:50%;border:none;background:rgba(60,60,60,0.85);color:#fff;font-size:18px;cursor:pointer;align-items:center;justify-content:center;">↓</button>
 
 <!-- USER INPUT (独立fixed bottom) -->
 
@@ -248,6 +249,7 @@ function persist() { localStorage.setItem(KEY, JSON.stringify(convs)); }
 function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
 function showChatUI() {
+  initScrollFeatures();
   document.getElementById('chat-header').classList.add('visible');
   document.getElementById('messages').classList.add('visible');
   document.getElementById('input-panel').classList.add('visible');
@@ -435,6 +437,34 @@ function pasteToInput(id) {
   }).catch(() => {
     document.getElementById(id).focus();
   });
+}
+
+function initScrollFeatures() {
+  const msgs = document.getElementById('messages');
+  const btn = document.getElementById('scroll-bottom-btn');
+
+  // スクロール位置でボタン表示/非表示 & 縦位置更新
+  msgs.addEventListener('scroll', () => {
+    const nearBottom = msgs.scrollHeight - msgs.scrollTop - msgs.clientHeight < 80;
+    btn.style.display = nearBottom ? 'none' : 'flex';
+    updateScrollBtnPosition();
+  });
+
+  // 上ベゼル近くタップで一番上へ
+  msgs.addEventListener('click', e => {
+    if (e.clientY < 80) {
+      msgs.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  });
+}
+
+function updateScrollBtnPosition() {
+  const btn = document.getElementById('scroll-bottom-btn');
+  const panel = document.getElementById('ai-input-panel').classList.contains('visible')
+    ? document.getElementById('ai-input-panel')
+    : document.getElementById('input-panel');
+  const panelH = panel.offsetHeight;
+  btn.style.bottom = (panelH + 10) + 'px';
 }
 
 function updateHeaderFade(color) {
