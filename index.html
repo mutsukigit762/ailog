@@ -251,8 +251,14 @@ function showChatUI() {
   document.getElementById('ai-input-panel').classList.remove('visible');
   setTimeout(() => {
     const hdrH = document.getElementById('chat-header').offsetHeight;
-    document.getElementById('messages').style.top = hdrH + 'px';
-    document.getElementById('messages').style.paddingTop = '0';
+    const msgs = document.getElementById('messages');
+    msgs.style.top = hdrH + 'px';
+    msgs.style.paddingTop = '0';
+    const panel = document.getElementById('ai-input-panel').classList.contains('visible')
+      ? document.getElementById('ai-input-panel')
+      : document.getElementById('input-panel');
+    msgs.style.bottom = panel.offsetHeight + 'px';
+    msgs.style.paddingBottom = '16px';
   }, 10);
 }
 function hideChatUI() {
@@ -268,7 +274,8 @@ function updateMessagesPadding() {
     ? document.getElementById('ai-input-panel')
     : document.getElementById('input-panel');
   const h = activePanel.offsetHeight;
-  msgs.style.paddingBottom = (h + 16) + 'px';
+  msgs.style.bottom = h + 'px';
+  msgs.style.paddingBottom = '16px';
   msgs.scrollTop = msgs.scrollHeight + 300;
 }
 function switchToAIMode() {
