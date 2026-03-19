@@ -49,7 +49,7 @@ overflow: visible;
 #chat-header.visible { display: flex; }
 #header-fade {
 display: none; position: fixed; left: 0; right: 0; height: 32px;
-pointer-events: none; z-index: 9;
+pointer-events: none; z-index: 8;
 }
 #header-fade.visible { display: block; }
 .back-btn { background: none; border: none; color: #666; font-size: 18px; cursor: pointer; padding: 2px 6px; line-height: 1; }
@@ -59,9 +59,9 @@ pointer-events: none; z-index: 9;
 
 /* MESSAGES - 完全独立fixed、上下paddingでヘッダーと入力欄を避ける */
 #messages {
-position: fixed; top: 0; left: 0; right: -6px; bottom: 0;
+position: fixed; top: 0; left: 0; right: 0; bottom: 0;
 overflow-y: auto;
-padding: 56px 12px 160px 12px;
+padding: 56px 20px 160px 12px;
 display: none; flex-direction: column; gap: 10px;
 -webkit-user-select: none; user-select: none;
 }
