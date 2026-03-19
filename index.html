@@ -43,7 +43,7 @@
 #chat-header {
 position: fixed; top: 0; left: 0; right: 0; z-index: 10;
 background: #000000; border-bottom: none;
-padding: 10px 14px; padding-top: max(10px, env(safe-area-inset-top)); display: none; align-items: center; gap: 10px;
+padding: 10px 14px; display: none; align-items: center; gap: 10px;
 }
 #chat-header.visible { display: flex; }
 #header-fade { display: none !important; }
@@ -249,6 +249,10 @@ function showChatUI() {
   document.getElementById('messages').classList.add('visible');
   document.getElementById('input-panel').classList.add('visible');
   document.getElementById('ai-input-panel').classList.remove('visible');
+  setTimeout(() => {
+    const hdrH = document.getElementById('chat-header').offsetHeight;
+    document.getElementById('messages').style.paddingTop = hdrH + 'px';
+  }, 10);
 }
 function hideChatUI() {
   document.getElementById('chat-header').classList.remove('visible');
