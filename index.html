@@ -273,7 +273,7 @@ function switchToAIMode() {
   document.getElementById('input-panel').classList.remove('visible');
   document.getElementById('ai-input-panel').classList.add('visible');
   const ri = document.getElementById('aiRichInput');
-  ri.value = ''; aiRichHtml = ''; ri.focus();
+  ri.value = ''; ri.style.height = 'auto'; aiRichHtml = ''; ri.focus();
   setTimeout(updateMessagesPadding, 50);
 }
 function switchToUserMode() {
@@ -432,8 +432,6 @@ function pasteToInput(id) {
   navigator.clipboard.readText().then(text => {
     const el = document.getElementById(id);
     el.value = text;
-    el.style.height = 'auto';
-    el.style.height = Math.min(el.scrollHeight, 220) + 'px';
   }).catch(() => {
     document.getElementById(id).focus();
   });
