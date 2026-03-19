@@ -47,11 +47,7 @@ padding: 10px 14px; display: none; align-items: center; gap: 10px;
 overflow: visible;
 }
 #chat-header.visible { display: flex; }
-#header-fade {
-display: none; position: fixed; left: 0; right: 20px; height: 32px;
-pointer-events: none; z-index: 8;
-}
-#header-fade.visible { display: block; }
+#header-fade { display: none !important; }
 .back-btn { background: none; border: none; color: #666; font-size: 18px; cursor: pointer; padding: 2px 6px; line-height: 1; }
 .chat-title-wrap { flex: 1; display: flex; align-items: center; gap: 8px; min-width: 0; }
 #chatTitle { font-size: 14px; font-weight: 500; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -61,7 +57,7 @@ pointer-events: none; z-index: 8;
 #messages {
 position: fixed; top: 56px; left: 0; right: 0; bottom: 0;
 overflow-y: auto;
-padding: 8px 28px 160px 12px;
+padding: 8px 12px 160px 12px;
 display: none; flex-direction: column; gap: 10px;
 -webkit-user-select: none; user-select: none;
 }
