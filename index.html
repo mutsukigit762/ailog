@@ -43,8 +43,7 @@
 #chat-header {
 position: fixed; top: 0; left: 0; right: 0; z-index: 10;
 background: #000000; border-bottom: none;
-padding: 10px 14px; display: none; align-items: center; gap: 10px;
-overflow: visible;
+padding: 10px 14px; padding-top: max(10px, env(safe-area-inset-top)); display: none; align-items: center; gap: 10px;
 }
 #chat-header.visible { display: flex; }
 #header-fade { display: none !important; }
@@ -55,7 +54,7 @@ overflow: visible;
 
 /* MESSAGES - 完全独立fixed、上下paddingでヘッダーと入力欄を避ける */
 #messages {
-position: fixed; top: 56px; left: 0; right: 0; bottom: 0;
+position: fixed; top: 0; left: 0; right: 0; bottom: 0;
 overflow-y: auto;
 padding: 8px 12px 160px 12px;
 display: none; flex-direction: column; gap: 10px;
