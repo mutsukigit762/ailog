@@ -183,9 +183,12 @@ overflow: hidden;
 <div id="input-panel">
   <div style="display:flex;align-items:flex-end;gap:8px;">
     <textarea class="ai-rich-input" id="chatInput" placeholder="自分のメッセージをペースト..." rows="3" style="flex:1;border-color:#ffffff;" inputmode="none"></textarea>
-    <button class="send-btn" onclick="sendMessage()" style="flex-shrink:0;margin-bottom:2px;">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
-    </button>
+    <div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0;margin-bottom:2px;">
+      <button class="send-btn" onclick="pasteToInput('chatInput')" style="font-size:14px;background:#2a2a2a;" title="ペースト">📋</button>
+      <button class="send-btn" onclick="sendMessage()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+      </button>
+    </div>
   </div>
 </div>
 
@@ -194,9 +197,12 @@ overflow: hidden;
 <div id="ai-input-panel">
   <div style="display:flex;align-items:flex-end;gap:8px;">
     <textarea class="ai-rich-input" id="aiRichInput" placeholder="AIの返答をペースト..." rows="3" style="flex:1;border:1px solid var(--accent) !important;" inputmode="none"></textarea>
-    <button class="send-btn" onclick="saveAIMessage()" style="flex-shrink:0;margin-bottom:2px;background:var(--accent);color:#fff;">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
-    </button>
+    <div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0;margin-bottom:2px;">
+      <button class="send-btn" onclick="pasteToInput('aiRichInput')" style="font-size:14px;background:#2a2a2a;" title="ペースト">📋</button>
+      <button class="send-btn" onclick="saveAIMessage()" style="background:var(--accent);color:#fff;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+      </button>
+    </div>
   </div>
 </div>
 
@@ -420,6 +426,17 @@ function toggleAI() {
   const textareaColor = 'rgba(17,17,17,0.4)';
   document.getElementById('chatInput').style.setProperty('background', textareaColor, 'important');
   document.getElementById('aiRichInput').style.setProperty('background', textareaColor, 'important');
+}
+
+function pasteToInput(id) {
+  navigator.clipboard.readText().then(text => {
+    const el = document.getElementById(id);
+    el.value = text;
+    el.style.height = 'auto';
+    el.style.height = Math.min(el.scrollHeight, 220) + 'px';
+  }).catch(() => {
+    document.getElementById(id).focus();
+  });
 }
 
 function updateHeaderFade(color) {
