@@ -257,7 +257,7 @@ function showChatUI() {
     const panel = document.getElementById('ai-input-panel').classList.contains('visible')
       ? document.getElementById('ai-input-panel')
       : document.getElementById('input-panel');
-    msgs.style.bottom = panel.offsetHeight + 'px';
+    msgs.style.bottom = Math.round(panel.offsetHeight / 2) + 'px';
     msgs.style.paddingBottom = '16px';
   }, 10);
 }
@@ -274,7 +274,7 @@ function updateMessagesPadding() {
     ? document.getElementById('ai-input-panel')
     : document.getElementById('input-panel');
   const h = activePanel.offsetHeight;
-  msgs.style.bottom = h + 'px';
+  msgs.style.bottom = Math.round(h / 2) + 'px';
   msgs.style.paddingBottom = '16px';
   msgs.scrollTop = msgs.scrollHeight + 300;
 }
