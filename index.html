@@ -42,7 +42,7 @@
 /* CHAT HEADER - 完全独立fixed */
 #chat-header {
 position: fixed; top: 0; left: 0; right: 0; z-index: 10;
-background: #000000; border-bottom: none;
+background: #000000; border-bottom: 1px solid #333;
 padding: 10px 14px; display: none; align-items: center; gap: 10px;
 }
 #chat-header.visible { display: flex; }
@@ -56,7 +56,7 @@ padding: 10px 14px; display: none; align-items: center; gap: 10px;
 #messages {
 position: fixed; top: 0; left: 0; right: 0; bottom: 0;
 overflow-y: auto;
-padding: 8px 12px 160px 12px;
+padding: 0 12px 160px 12px;
 display: none; flex-direction: column; gap: 10px;
 -webkit-user-select: none; user-select: none;
 }
@@ -251,7 +251,8 @@ function showChatUI() {
   document.getElementById('ai-input-panel').classList.remove('visible');
   setTimeout(() => {
     const hdrH = document.getElementById('chat-header').offsetHeight;
-    document.getElementById('messages').style.paddingTop = hdrH + 'px';
+    document.getElementById('messages').style.top = hdrH + 'px';
+    document.getElementById('messages').style.paddingTop = '0';
   }, 10);
 }
 function hideChatUI() {
