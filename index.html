@@ -172,7 +172,7 @@ overflow: hidden;
 <!-- MESSAGES (独立fixed) -->
 
 <div id="messages"></div>
-<button id="scroll-bottom-btn" onclick="document.getElementById('messages').scrollTop=document.getElementById('messages').scrollHeight" style="display:none;position:fixed;right:16px;z-index:15;width:36px;height:36px;border-radius:50%;border:none;background:rgba(60,60,60,0.85);color:#fff;font-size:18px;cursor:pointer;align-items:center;justify-content:center;">↓</button>
+<button id="scroll-bottom-btn" onclick="document.getElementById('messages').scrollTop=document.getElementById('messages').scrollHeight" style="display:none;position:fixed;right:16px;z-index:15;width:36px;height:36px;border-radius:50%;border:none;background:rgba(60,60,60,0.85);color:#fff;font-size:18px;cursor:pointer;align-items:center;justify-content:center;-webkit-user-select:none;user-select:none;">↓</button>
 
 <!-- USER INPUT (独立fixed bottom) -->
 
@@ -180,7 +180,7 @@ overflow: hidden;
   <div style="display:flex;align-items:flex-end;gap:8px;">
     <textarea class="ai-rich-input" id="chatInput" placeholder="自分のメッセージをペースト..." rows="3" style="flex:1;border-color:#ffffff;" inputmode="none"></textarea>
     <div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0;margin-bottom:2px;">
-      <button class="send-btn" onclick="pasteToInput('chatInput')" style="font-size:14px;background:#2a2a2a;" title="ペースト">📋</button>
+      <button class="send-btn" onclick="pasteToInput('chatInput')" style="font-size:14px;background:#2a2a2a;-webkit-user-select:none;user-select:none;" title="ペースト">📋</button>
       <button class="send-btn" onclick="sendMessage()">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
       </button>
@@ -194,7 +194,7 @@ overflow: hidden;
   <div style="display:flex;align-items:flex-end;gap:8px;">
     <textarea class="ai-rich-input" id="aiRichInput" placeholder="AIの返答をペースト..." rows="3" style="flex:1;border:1px solid var(--accent) !important;" inputmode="none"></textarea>
     <div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0;margin-bottom:2px;">
-      <button class="send-btn" onclick="pasteToInput('aiRichInput')" style="font-size:14px;background:#2a2a2a;" title="ペースト">📋</button>
+      <button class="send-btn" onclick="pasteToInput('aiRichInput')" style="font-size:14px;background:#2a2a2a;-webkit-user-select:none;user-select:none;" title="ペースト">📋</button>
       <button class="send-btn" onclick="saveAIMessage()" style="background:var(--accent);color:#fff;">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
       </button>
