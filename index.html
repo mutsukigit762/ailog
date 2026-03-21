@@ -47,6 +47,8 @@ padding: 10px 14px; display: none; align-items: center; gap: 10px;
 }
 #chat-header.visible { display: flex; }
 #header-fade { display: none !important; }
+.search-highlight { background: #ffcc00; color: #000; border-radius: 3px; }
+.search-highlight.current { background: #ff6600; color: #fff; }
 .back-btn { background: none; border: none; color: #666; font-size: 18px; cursor: pointer; padding: 2px 6px; line-height: 1; }
 .chat-title-wrap { flex: 1; display: flex; align-items: center; gap: 8px; min-width: 0; }
 #chatTitle { font-size: 14px; font-weight: 500; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -169,9 +171,17 @@ overflow: hidden;
     <span id="chatTitle" onclick="openTitleModal()"></span>
     <span id="chatBadge" class="conv-badge" onclick="toggleAI()"></span>
   </div>
+  <button class="back-btn" onclick="toggleChatSearch()" id="search-btn" style="font-size:16px;">🔍</button>
   <button class="header-btn" onclick="newConvFromChat()">＋ 新規</button>
 </div>
 <div id="header-fade"></div>
+<div id="chat-search-bar" style="display:none;position:fixed;left:0;right:0;z-index:9;background:inherit;padding:6px 12px;display:none;align-items:center;gap:8px;">
+  <input id="chat-search-input" type="search" placeholder="チャット内を検索..." oninput="searchInChat()" style="flex:1;background:#1a1a1a;border:1px solid #444;border-radius:20px;padding:6px 14px;color:#e8e8f0;font-size:15px;font-family:inherit;outline:none;">
+  <span id="chat-search-count" style="font-size:12px;color:#707070;flex-shrink:0;"></span>
+  <button onclick="navigateSearch(-1)" style="background:none;border:none;color:#e8e8f0;font-size:18px;cursor:pointer;padding:2px 4px;">↑</button>
+  <button onclick="navigateSearch(1)" style="background:none;border:none;color:#e8e8f0;font-size:18px;cursor:pointer;padding:2px 4px;">↓</button>
+  <button onclick="closeChatSearch()" style="background:none;border:none;color:#707070;font-size:14px;cursor:pointer;padding:2px 6px;">✕</button>
+</div>
 
 <!-- MESSAGES (独立fixed) -->
 
@@ -457,6 +467,90 @@ function toggleAI() {
   const textareaColor = 'rgba(17,17,17,0.4)';
   document.getElementById('chatInput').style.setProperty('background', textareaColor, 'important');
   document.getElementById('aiRichInput').style.setProperty('background', textareaColor, 'important');
+}
+
+
+let chatSearchResults = [], chatSearchIndex = 0;
+
+function toggleChatSearch() {
+  const bar = document.getElementById('chat-search-bar');
+  if (bar.style.display === 'none' || !bar.style.display) {
+    openChatSearch();
+  } else {
+    closeChatSearch();
+  }
+}
+
+function openChatSearch() {
+  const bar = document.getElementById('chat-search-bar');
+  const hdr = document.getElementById('chat-header');
+  bar.style.display = 'flex';
+  bar.style.top = hdr.offsetHeight + 'px';
+  bar.style.background = hdr.style.background || '#000000';
+  // messagesのtopを検索バー分下げる
+  const msgs = document.getElementById('messages');
+  msgs.style.top = (hdr.offsetHeight + bar.offsetHeight + 2) + 'px';
+  setTimeout(() => {
+    bar.style.top = hdr.offsetHeight + 'px';
+    const msgs2 = document.getElementById('messages');
+    msgs2.style.top = (hdr.offsetHeight + bar.offsetHeight + 2) + 'px';
+    document.getElementById('chat-search-input').focus();
+  }, 10);
+}
+
+function closeChatSearch() {
+  document.getElementById('chat-search-bar').style.display = 'none';
+  document.getElementById('chat-search-input').value = '';
+  clearSearchHighlights();
+  chatSearchResults = []; chatSearchIndex = 0;
+  document.getElementById('chat-search-count').textContent = '';
+  // messagesのtopを戻す
+  const hdr = document.getElementById('chat-header');
+  document.getElementById('messages').style.top = hdr.offsetHeight + 'px';
+}
+
+function clearSearchHighlights() {
+  document.querySelectorAll('.search-highlight').forEach(el => {
+    el.outerHTML = el.textContent;
+  });
+}
+
+function searchInChat() {
+  clearSearchHighlights();
+  chatSearchResults = []; chatSearchIndex = 0;
+  const q = document.getElementById('chat-search-input').value.trim();
+  const count = document.getElementById('chat-search-count');
+  if (!q) { count.textContent = ''; return; }
+
+  const bubbles = document.querySelectorAll('#messages .bubble');
+  bubbles.forEach(bubble => {
+    const html = bubble.innerHTML;
+    const regex = new RegExp(q.replace(/[.*+?^${}()|[\]\]/g, '\$&'), 'gi');
+    if (regex.test(bubble.textContent)) {
+      bubble.innerHTML = bubble.innerHTML.replace(regex, m => `<mark class="search-highlight">${m}</mark>`);
+    }
+  });
+
+  chatSearchResults = Array.from(document.querySelectorAll('.search-highlight'));
+  count.textContent = chatSearchResults.length ? `1/${chatSearchResults.length}` : '0件';
+  if (chatSearchResults.length) {
+    chatSearchIndex = 0;
+    highlightCurrent();
+  }
+}
+
+function navigateSearch(dir) {
+  if (!chatSearchResults.length) return;
+  chatSearchResults[chatSearchIndex].classList.remove('current');
+  chatSearchIndex = (chatSearchIndex + dir + chatSearchResults.length) % chatSearchResults.length;
+  highlightCurrent();
+}
+
+function highlightCurrent() {
+  const el = chatSearchResults[chatSearchIndex];
+  el.classList.add('current');
+  el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  document.getElementById('chat-search-count').textContent = (chatSearchIndex + 1) + '/' + chatSearchResults.length;
 }
 
 function pasteToInput(id) {
