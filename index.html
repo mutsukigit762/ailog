@@ -525,7 +525,8 @@ function searchInChat() {
   const bubbles = document.querySelectorAll('#messages .bubble');
   bubbles.forEach(bubble => {
     const html = bubble.innerHTML;
-    const regex = new RegExp(q.replace(/[.*+?^${}()|[\]\]/g, '\$&'), 'gi');
+    const escaped = q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const regex = new RegExp(escaped, 'gi');
     if (regex.test(bubble.textContent)) {
       bubble.innerHTML = bubble.innerHTML.replace(regex, m => `<mark class="search-highlight">${m}</mark>`);
     }
