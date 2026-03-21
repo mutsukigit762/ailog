@@ -1,681 +1,704 @@
 <!DOCTYPE html>
 
-<html lang="ja" style="overscroll-behavior:none;overflow-x:hidden;">
+<html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="読書記録">
-<link rel="apple-touch-icon" href="icon.png">
-<title>読書記録</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23e8e8f0' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z'/></svg>">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<title>AI Log</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@300;400;600&family=DM+Mono:wght@300;400&display=swap');
+  :root { --bg: #000000; --surface: #000000; --surface2: #111111; --border: #1a1a1a; --text: #e8e8f0; --text-muted: #707070; --accent: #5b8dee; color-scheme: dark; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  .btn-copy-msg { background:#ffffff !important; color:#000 !important; -webkit-text-fill-color:#000 !important; flex:2; border:none; border-radius:10px; padding:11px; font-family:inherit; font-size:13px; font-weight:500; cursor:pointer; }
+  button { -webkit-appearance: none !important; appearance: none !important; color: var(--text) !important; -webkit-text-fill-color: var(--text) !important; }
+  input, textarea { -webkit-appearance: none !important; appearance: none !important; color: var(--text) !important; -webkit-text-fill-color: var(--text) !important; background-color: var(--bg) !important; }
+  html, body { height: 100%; overflow: hidden; overscroll-behavior-x: none; font-family: -apple-system, 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', sans-serif; background: #000000; color: var(--text); font-size: 14px; }
 
-- { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+/* LIST VIEW */
+#list-view { position: fixed; inset: 0; display: flex; flex-direction: column; }
+.list-header { background: var(–surface); border-bottom: 1px solid var(–border); padding: 12px 16px; display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
+.list-header h1 { font-size: 22px; font-weight: 700; flex: 1; }
+.header-btn { background: var(–surface2); border: 1px solid var(–border); color: var(–text); border-radius: 8px; padding: 6px 12px; font-size: 12px; cursor: pointer; font-family: inherit; }
+.search-wrap { padding: 10px 12px; background: var(–surface); border-bottom: 1px solid var(–border); flex-shrink: 0; }
+.search-input { width: 100%; background: var(–bg) !important; border: 1px solid #444 !important; border-radius: 20px; padding: 7px 14px; color: var(–text); font-size: 16px; font-family: inherit; outline: none; }
+.search-input:focus { border-color: var(–accent); }
+.search-input::placeholder { color: var(–text-muted); }
+#list-panel { flex: 1; overflow-y: auto; -webkit-user-select: none; user-select: none; }
+.conv-item { padding: 14px 16px; cursor: pointer; display: flex; align-items: flex-start; gap: 12px; }
+.conv-item:active { background: var(–surface2); }
+.conv-row { position: relative; overflow: hidden; border-bottom: 1px solid var(–border); }
+.conv-row .conv-item { transition: transform 0.2s; will-change: transform; }
+.conv-row .delete-btn { position: absolute; right: -80px; top: 0; bottom: 0; width: 80px; background: #c0392b; color: #fff; border: none; font-size: 13px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-family: inherit; }
+.conv-badge { font-size: 11px; font-weight: 500; padding: 2px 0; border-radius: 10px; flex-shrink: 0; margin-top: 2px; width: 44px; text-align: center; }
+.badge-claude { background: #cc5c3a; color: #fff; }
+.badge-grok { background: #000000; color: #ffffff; border: 1px solid #333; }
+.conv-info { flex: 1; min-width: 0; }
+.conv-title { font-size: 15px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.conv-preview { font-size: 13px; color: var(–text-muted); margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.conv-date { font-size: 12px; color: var(–text-muted); flex-shrink: 0; margin-top: 2px; }
+.empty-list { padding: 40px 20px; text-align: center; color: var(–text-muted); font-size: 13px; line-height: 1.8; }
 
-button {
--webkit-appearance: none;
-appearance: none;
-cursor: pointer;
-color: inherit;
-background: none;
-border: none;
-font-family: inherit;
+/* CHAT HEADER - 完全独立fixed */
+#chat-header {
+position: fixed; top: 0; left: 0; right: 0; z-index: 10;
+background: #000000; border-bottom: none;
+padding: 10px 14px; display: none; align-items: center; gap: 10px;
 }
+#chat-header.visible { display: flex; }
+#header-fade { display: none !important; }
+.back-btn { background: none; border: none; color: #666; font-size: 18px; cursor: pointer; padding: 2px 6px; line-height: 1; }
+.chat-title-wrap { flex: 1; display: flex; align-items: center; gap: 8px; min-width: 0; }
+#chatTitle { font-size: 14px; font-weight: 500; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#chatBadge { cursor: pointer; }
 
-input, textarea { -webkit-appearance: none; appearance: none; }
-
-body {
-font-family: ‘Noto Serif JP’, serif;
-background: #f5f2ee;
-color: #2a2520;
-min-height: 100vh;
-padding-bottom: 100px;
-overscroll-behavior: none;
-overflow-x: hidden;
+/* MESSAGES - 完全独立fixed、上下paddingでヘッダーと入力欄を避ける */
+#messages {
+position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+overflow-y: auto;
+padding: 0 12px 160px 12px;
+display: none; flex-direction: column; gap: 10px;
+-webkit-user-select: none; user-select: none;
 }
+#messages.visible { display: flex; }
+#messages.bg-grok { background: #000000; }
+#messages.bg-claude { background: #262624; }
+#messages.bg-claude .msg-row.user .bubble { background: #141413; }
 
-header {
-background: #fdfbf8;
-border-bottom: 1px solid #ddd8d0;
-padding: 20px 20px 16px;
-position: sticky;
-top: 0;
-z-index: 10;
-}
+.msg-row { display: flex; width: 100%; }
+.msg-row.ai { align-self: flex-start; max-width: 100%; }
+.msg-row.user { align-self: flex-end; max-width: 88%; justify-content: flex-end; margin: 12px 0; }
+.bubble { font-size: 18px; line-height: 1.35; word-break: break-word; font-weight: 300; }
+.msg-row.ai .bubble { background: transparent; color: #e8e8f0; padding: 2px 4px; width: 100%; }
+.msg-row.user .bubble { background: #2a2a2a; color: #f0f0f0; padding: 10px 15px; border-radius: 20px; }
+.ai-rich { font-size: 18px; line-height: 1.35; word-break: break-word; font-family: -apple-system, ‘Hiragino Sans’, ‘Hiragino Kaku Gothic ProN’, sans-serif !important; color: #e8e8f0 !important; }
+.ai-rich * { font-family: -apple-system, ‘Hiragino Sans’, ‘Hiragino Kaku Gothic ProN’, sans-serif !important; color: inherit !important; background: transparent !important; }
+.ai-rich p, .ai-rich span, .ai-rich li, .ai-rich td { font-size: 18px !important; }
+.ai-rich h1 { font-size: 22px; font-weight: 700; margin: 0.7em 0 0.4em; }
+.ai-rich h2 { font-size: 19px; font-weight: 700; margin: 0.7em 0 0.4em; }
+.ai-rich h3 { font-size: 18px; font-weight: 700; margin: 0.6em 0 0.3em; }
+.ai-rich strong, .ai-rich b { font-weight: 700; }
+.ai-rich p, .ai-rich div { margin-bottom: 0.8em; }
+.ai-rich p:last-child, .ai-rich div:last-child { margin-bottom: 0; }
+.ai-rich ul, .ai-rich ol { padding-left: 1.8em; margin-bottom: 0.5em; }
+.ai-rich li { margin-bottom: 0.2em; }
 
-header h1 { font-size: 18px; font-weight: 600; letter-spacing: 0.08em; color: #2a2520; }
-
-.header-sub {
-font-family: ‘DM Mono’, monospace;
-font-size: 11px;
-color: #9e9890;
-margin-top: 2px;
-letter-spacing: 0.05em;
-}
-
-.header-actions { display: flex; gap: 8px; margin-top: 12px; }
-
-.btn-small {
-font-family: ‘DM Mono’, monospace;
-font-size: 11px;
-letter-spacing: 0.04em;
-padding: 6px 12px;
-border: 1px solid #ddd8d0;
-border-radius: 4px;
-background: #f5f2ee;
-color: #9e9890;
-transition: background 0.15s;
-}
-
-.btn-small:active { background: #ddd8d0; }
-
-.filter-bar {
-padding: 12px 20px;
-display: flex;
-gap: 8px;
-overflow-x: auto;
-scrollbar-width: none;
-background: #fdfbf8;
-border-bottom: 1px solid #ddd8d0;
-}
-
-.filter-bar::-webkit-scrollbar { display: none; }
-
-.filter-chip {
-font-family: ‘DM Mono’, monospace;
-font-size: 11px;
-white-space: nowrap;
-padding: 5px 12px;
-border-radius: 20px;
-border: 1px solid #ddd8d0;
-background: transparent;
-color: #9e9890;
-transition: all 0.15s;
-}
-
-.filter-chip.active {
-background: #2a2520;
-color: #fdfbf8;
-border-color: #2a2520;
-}
-
-.book-list {
-padding: 16px 20px;
-display: flex;
-flex-direction: column;
-gap: 8px;
-}
-
-.empty-state {
-text-align: center;
-padding: 60px 20px;
-color: #9e9890;
-font-size: 14px;
-line-height: 2;
-}
-
-.empty-state .big { font-size: 32px; display: block; margin-bottom: 8px; }
-
-.book-card {
-background: #fdfbf8;
-border: 1px solid #ddd8d0;
-border-radius: 8px;
-padding: 16px;
-cursor: pointer;
-transition: background 0.15s;
-animation: fadeIn 0.2s ease;
-}
-
-@keyframes fadeIn {
-from { opacity: 0; transform: translateY(4px); }
-to { opacity: 1; transform: translateY(0); }
-}
-
-.book-card:active { background: #f5f2ee; }
-
-.book-card-top {
-display: flex;
-justify-content: space-between;
-align-items: flex-start;
-gap: 12px;
-}
-
-.book-title { font-size: 15px; font-weight: 600; line-height: 1.5; flex: 1; color: #2a2520; }
-
-.book-tags { display: flex; flex-direction: column; gap: 4px; flex-shrink: 0; }
-
-.tag {
-font-family: ‘DM Mono’, monospace;
-font-size: 10px;
-padding: 2px 8px;
-border-radius: 3px;
-text-align: center;
-letter-spacing: 0.03em;
-}
-
-.tag-done { background: #2a2520; color: #fff; }
-.tag-reading { background: #ddd8d0; color: #9e9890; }
-.tag-buy { background: #5c4a3a; color: #fff; }
-.tag-borrow { background: #7a8c7a; color: #fff; }
-
-.book-author { font-size: 12px; color: #9e9890; margin-top: 4px; }
-
-.book-date {
-font-family: ‘DM Mono’, monospace;
-font-size: 11px;
-color: #9e9890;
-margin-top: 10px;
-}
-
-.book-review-preview {
-font-size: 12px;
-color: #9e9890;
-margin-top: 8px;
-line-height: 1.6;
-display: -webkit-box;
--webkit-line-clamp: 2;
--webkit-box-orient: vertical;
-overflow: hidden;
-}
-
-.fab {
-position: fixed;
-bottom: 24px;
-right: 24px;
-width: 56px;
-height: 56px;
-border-radius: 50%;
-background: #2a2520;
-color: #fdfbf8;
-font-size: 24px;
-display: flex;
-align-items: center;
-justify-content: center;
-box-shadow: 0 4px 16px rgba(0,0,0,0.2);
-transition: transform 0.15s;
-z-index: 10;
-}
-
-.fab:active { transform: scale(0.92); }
-
-.modal-overlay {
+/* 入力欄 - chat-viewから切り離して完全独立fixed */
+#input-panel {
+position: fixed; left: 0; right: 0; bottom: 0; z-index: 20;
 display: none;
-position: fixed;
-top: 0; left: 0; right: 0; bottom: 0;
-background: rgba(0,0,0,0.4);
-z-index: 9999;
-align-items: flex-end;
-}
-
-.modal-overlay.open { display: flex; }
-
-.modal {
-background: #fdfbf8;
-border-radius: 16px 16px 0 0;
-width: 100%;
-max-height: 82dvh;
-max-height: 82vh;
-overflow-y: scroll;
--webkit-overflow-scrolling: touch;
-overscroll-behavior-x: none;
-overscroll-behavior-y: contain;
-padding: 0 0 48px;
-animation: slideUp 0.25s ease;
-position: relative;
-z-index: 10000;
-}
-
-@keyframes slideUp {
-from { transform: translateY(40px); opacity: 0; }
-to { transform: translateY(0); opacity: 1; }
-}
-
-.modal-handle {
-width: 36px; height: 4px;
-background: #ddd8d0;
-border-radius: 2px;
-margin: 12px auto 0;
-}
-
-.modal-header {
-padding: 20px 20px 0;
-display: flex;
-justify-content: space-between;
-align-items: center;
-}
-
-.modal-title { font-size: 16px; font-weight: 600; letter-spacing: 0.05em; color: #2a2520; }
-
-.modal-close {
-width: 32px; height: 32px;
-background: #f5f2ee;
-border-radius: 50%;
-font-size: 18px;
-display: flex;
-align-items: center;
-justify-content: center;
-color: #9e9890;
-}
-
-.modal-body {
-padding: 20px;
-display: flex;
-flex-direction: column;
-gap: 16px;
-width: 100%;
-box-sizing: border-box;
-}
-
-.field-label {
-font-family: ‘DM Mono’, monospace;
-font-size: 11px;
-letter-spacing: 0.06em;
-color: #9e9890;
-margin-bottom: 6px;
-display: block;
-}
-
-.required-mark { color: #c0392b; margin-left: 3px; }
-
-input[type=“text”],
-input[type=“date”],
-textarea {
-width: 100%;
-max-width: 100%;
-font-family: ‘Noto Serif JP’, serif;
-font-size: 14px;
-color: #2a2520;
-background: #f5f2ee;
-border: 1px solid #ddd8d0;
-border-radius: 6px;
+background: #000000; border-top: none;
 padding: 10px 12px;
-outline: none;
-transition: border-color 0.15s;
-display: block;
-}
-
-input[type=“text”]:focus,
-input[type=“date”]:focus,
-textarea:focus { border-color: #2a2520; }
-
-textarea { resize: none; min-height: 100px; line-height: 1.7; }
-
-.toggle-group {
-display: flex;
-border: 1px solid #ddd8d0;
-border-radius: 6px;
+padding-bottom: max(20px, calc(env(safe-area-inset-bottom) + 10px));
 overflow: hidden;
 }
-
-.toggle-btn {
-flex: 1;
-padding: 9px 0;
-font-family: ‘Noto Serif JP’, serif;
-font-size: 13px;
-color: #9e9890;
-background: transparent;
-transition: all 0.15s;
-text-align: center;
+#input-panel.visible { display: block; }
+#input-panel::before, #ai-input-panel::before {
+content: ‘’; position: absolute; inset: 0; z-index: -1;
+-webkit-backdrop-filter: blur(24px);
+backdrop-filter: blur(24px);
+-webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 60%);
+mask-image: linear-gradient(to bottom, transparent 0%, black 60%);
+pointer-events: none;
 }
-
-.toggle-btn:not(:last-child) { border-right: 1px solid #ddd8d0; }
-.toggle-btn.active { background: #2a2520; color: #fdfbf8; }
-
-.btn-primary {
-width: 100%;
-padding: 14px;
-background: #2a2520;
-color: #fdfbf8;
-font-family: ‘Noto Serif JP’, serif;
-font-size: 15px;
-font-weight: 600;
-letter-spacing: 0.06em;
-border-radius: 8px;
-transition: opacity 0.15s;
+#input-panel::after, #ai-input-panel::after {
+content: ‘’; position: absolute; top: 0; left: 0; right: 0; height: 24px;
+background: linear-gradient(to bottom, var(–panel-fade, #000000), transparent);
+pointer-events: none; z-index: 1;
 }
+.role-toggle-btn { background: #2a2a2a; border: 1px solid #555; color: #f0f0f0; border-radius: 16px; padding: 6px 12px; font-size: 12px; cursor: pointer; font-family: inherit; flex-shrink: 0; -webkit-user-select: none; user-select: none; }
+.chat-textarea { flex: 1; background: var(–surface2); border: 1px solid var(–border); border-radius: 16px; padding: 9px 14px; color: var(–text); font-size: 16px; font-family: inherit; outline: none; resize: none; min-height: 38px; max-height: 140px; line-height: 1.4; overflow-y: auto; }
+.chat-textarea:focus { border-color: #ffffff; }
+.chat-textarea::placeholder { color: var(–text-muted); }
+.send-btn { background: #3a3a3a; border: none; color: #ffffff; border-radius: 50%; width: 36px; height: 36px; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
 
-.btn-primary:active { opacity: 0.8; }
-
-.btn-danger {
-width: 100%;
-padding: 12px;
-background: transparent;
-color: #c0392b;
-border: 1px solid #c0392b;
-border-radius: 8px;
-font-family: ‘Noto Serif JP’, serif;
-font-size: 14px;
-transition: all 0.15s;
+#ai-input-panel {
+position: fixed; left: 0; right: 0; bottom: 0; z-index: 20;
+display: none;
+background: #000000; border-top: none;
+padding: 10px 12px;
+padding-bottom: max(20px, calc(env(safe-area-inset-bottom) + 10px));
+overflow: hidden;
 }
+#ai-input-panel.visible { display: block; }
+.ai-input-header { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.ai-input-label { font-size: 12px; color: var(–accent); font-weight: 500; flex: 1; }
+.ai-cancel-btn { background: none; border: none; color: var(–text-muted); font-size: 13px; cursor: pointer; font-family: inherit; padding: 2px 8px; }
+.ai-save-btn { background: var(–accent); border: none; color: #fff; border-radius: 12px; padding: 5px 14px; font-size: 13px; cursor: pointer; font-family: inherit; }
+.ai-rich-input { width: 100%; min-height: 38px; max-height: 220px; background: rgba(17,17,17,0.4); border: 1px solid var(–accent); border-radius: 12px; padding: 10px 14px; color: var(–text); font-size: 16px; font-family: -apple-system, ‘Hiragino Sans’, ‘Hiragino Kaku Gothic ProN’, sans-serif; outline: none; resize: none; line-height: 1.35; overflow-y: auto; -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); }
+.ai-rich-input::placeholder { color: #3a3a3a !important; -webkit-text-fill-color: #3a3a3a !important; opacity: 1; }
 
-.btn-danger:active { background: #c0392b; color: #fff; }
-
-.detail-field { border-bottom: 1px solid #ddd8d0; padding-bottom: 16px; }
-.detail-field:last-of-type { border-bottom: none; }
-.detail-value { font-size: 14px; line-height: 1.8; white-space: pre-wrap; margin-top: 4px; color: #2a2520; }
-.detail-tags { display: flex; gap: 6px; flex-wrap: wrap; }
+/* MODALS */
+.overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 100; align-items: flex-end; justify-content: center; padding: 0 16px 72px; }
+.overlay.open { display: flex; }
+.modal { background: #1c1c1e; border: 1px solid var(–border); border-radius: 16px; width: 100%; max-width: 600px; padding: 20px 16px; display: flex; flex-direction: column; gap: 12px; max-height: 80dvh; overflow-y: auto; }
+.modal h2 { font-size: 15px; font-weight: 500; text-align: center; }
+.modal input { width: 100%; background: var(–bg); border: 1px solid var(–border); border-radius: 10px; padding: 9px 12px; color: var(–text); font-size: 16px; font-family: inherit; outline: none; }
+.modal input:focus { border-color: var(–accent); }
+.modal-actions { display: flex; gap: 8px; }
+.btn-cancel { flex: 1; padding: 11px; border-radius: 10px; border: 1px solid var(–border); background: transparent; color: var(–text-muted); font-family: inherit; font-size: 13px; cursor: pointer; }
+.btn-save { flex: 2; padding: 11px; border-radius: 10px; border: none; background: var(–accent); color: #fff; font-family: inherit; font-size: 13px; font-weight: 500; cursor: pointer; }
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-thumb { background: var(–border); border-radius: 4px; }
 </style>
 
 </head>
 <body>
 
-<header>
-  <h1>読書記録</h1>
-  <div class="header-sub" id="totalCount">0 books</div>
-  <div class="header-actions">
-    <button class="btn-small" onclick="exportJSON()">↓ エクスポート</button>
-    <button class="btn-small" onclick="document.getElementById('importFile').click()">↑ インポート</button>
-    <input type="file" id="importFile" accept=".json" style="display:none" onchange="importJSON(event)">
-  </div>
-</header>
+<!-- LIST VIEW -->
 
-<div class="filter-bar">
-  <button class="filter-chip active" onclick="setFilter('all',this)">すべて</button>
-  <button class="filter-chip" onclick="setFilter('done',this)">読了</button>
-  <button class="filter-chip" onclick="setFilter('reading',this)">未読了</button>
-  <button class="filter-chip" onclick="setFilter('buy',this)">購入</button>
-  <button class="filter-chip" onclick="setFilter('borrow',this)">借りた</button>
+<div id="list-view">
+  <div class="list-header">
+    <h1>AI Log</h1>
+    <button class="header-btn" onclick="exportData()">↑</button>
+    <button class="header-btn" onclick="importData()">↓</button>
+    <button class="header-btn" onclick="newConv()">＋ 新規</button>
+  </div>
+  <input type="file" id="importFile" accept=".json" style="display:none" onchange="handleImport(event)">
+  <div class="search-wrap">
+    <input class="search-input" type="search" placeholder="会話を検索..." id="searchInput" oninput="renderList()">
+  </div>
+  <div id="list-panel"></div>
 </div>
 
-<div class="book-list" id="bookList"></div>
+<!-- CHAT HEADER (独立fixed) -->
 
-<button class="fab" onclick="openAddModal()">＋</button>
+<div id="chat-header">
+  <button class="back-btn" onclick="backToList()">←</button>
+  <div class="chat-title-wrap">
+    <span id="chatTitle" onclick="openTitleModal()"></span>
+    <span id="chatBadge" class="conv-badge" onclick="toggleAI()"></span>
+  </div>
+  <button class="header-btn" onclick="newConvFromChat()">＋ 新規</button>
+</div>
+<div id="header-fade"></div>
 
-<div class="modal-overlay" id="editModal" onclick="handleOverlayClick(event,'editModal')">
-  <div class="modal">
-    <div class="modal-handle"></div>
-    <div class="modal-header">
-      <span class="modal-title" id="editModalTitle">新しい本</span>
-      <button class="modal-close" onclick="closeEditModal()">×</button>
-    </div>
-    <div class="modal-body">
-      <div>
-        <label class="field-label">タイトル <span class="required-mark">*</span></label>
-        <input type="text" id="inputTitle" placeholder="本のタイトル">
-      </div>
-      <div>
-        <label class="field-label">著者</label>
-        <input type="text" id="inputAuthor" placeholder="著者名">
-      </div>
-      <div>
-        <label class="field-label">読んだ日付</label>
-        <input type="date" id="inputDate">
-      </div>
-      <div>
-        <label class="field-label">読了状況</label>
-        <div class="toggle-group">
-          <button class="toggle-btn active" id="btnDone" onclick="setStatus('done')">読了</button>
-          <button class="toggle-btn" id="btnReading" onclick="setStatus('reading')">未読了</button>
-        </div>
-      </div>
-      <div>
-        <label class="field-label">入手方法</label>
-        <div class="toggle-group">
-          <button class="toggle-btn active" id="btnBuy" onclick="setSource('buy')">購入</button>
-          <button class="toggle-btn" id="btnBorrow" onclick="setSource('borrow')">借りた</button>
-        </div>
-      </div>
-      <div>
-        <label class="field-label">感想・レビュー</label>
-        <textarea id="inputReview" placeholder="読んで感じたこと、メモなど…"></textarea>
-      </div>
-      <button class="btn-primary" onclick="saveBook()">保存する</button>
-      <button class="btn-danger" id="deleteBtn" style="display:none" onclick="deleteBook()">この記録を削除する</button>
+<!-- MESSAGES (独立fixed) -->
+
+<div id="messages"></div>
+<button id="scroll-bottom-btn" onclick="document.getElementById('messages').scrollTop=document.getElementById('messages').scrollHeight" style="display:none;position:fixed;right:16px;z-index:15;width:36px;height:36px;border-radius:50%;border:none;background:rgba(60,60,60,0.85);color:#fff;font-size:18px;cursor:pointer;align-items:center;justify-content:center;-webkit-user-select:none;user-select:none;">↓</button>
+
+<!-- USER INPUT (独立fixed bottom) -->
+
+<div id="panel-fade" style="display:none;position:fixed;left:0;right:0;height:32px;pointer-events:none;z-index:19;"></div>
+<div id="input-panel">
+  <div style="display:flex;align-items:flex-end;gap:8px;">
+    <textarea class="ai-rich-input" id="chatInput" placeholder="自分のメッセージをペースト..." rows="3" style="flex:1;border-color:#ffffff;" inputmode="none"></textarea>
+    <div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0;margin-bottom:2px;">
+      <button class="send-btn" onclick="pasteToInput('chatInput')" style="font-size:14px;background:#2a2a2a;-webkit-user-select:none;user-select:none;" title="ペースト">📋</button>
+      <button class="send-btn" onclick="sendMessage()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+      </button>
     </div>
   </div>
 </div>
 
-<div class="modal-overlay" id="detailModal" onclick="handleOverlayClick(event,'detailModal')">
-  <div class="modal">
-    <div class="modal-handle"></div>
-    <div class="modal-header">
-      <span class="modal-title">詳細</span>
-      <button class="modal-close" onclick="closeDetailModal()">×</button>
+<!-- AI INPUT (独立fixed bottom) -->
+
+<div id="ai-input-panel">
+  <div style="display:flex;align-items:flex-end;gap:8px;">
+    <textarea class="ai-rich-input" id="aiRichInput" placeholder="AIの返答をペースト..." rows="3" style="flex:1;border:1px solid var(--accent) !important;" inputmode="none"></textarea>
+    <div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0;margin-bottom:2px;">
+      <button class="send-btn" onclick="pasteToInput('aiRichInput')" style="font-size:14px;background:#2a2a2a;-webkit-user-select:none;user-select:none;" title="ペースト">📋</button>
+      <button class="send-btn" onclick="saveAIMessage()" style="background:var(--accent);color:#fff;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+      </button>
     </div>
-    <div class="modal-body" id="detailBody"></div>
+  </div>
+</div>
+
+<!-- MODALS -->
+
+<div class="overlay" id="titleOverlay">
+  <div class="modal">
+    <h2>タイトルを編集</h2>
+    <input type="text" id="titleInput" placeholder="タイトル">
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeTitleModal()">キャンセル</button>
+      <button class="btn-save" onclick="saveTitle()">保存</button>
+    </div>
+  </div>
+</div>
+<div class="overlay" id="deleteMsgOverlay">
+  <div class="modal">
+    <h2>メッセージを操作</h2>
+    <div class="modal-actions">
+      <button class="btn-save btn-copy-msg" onclick="copyMsg()">コピー</button>
+      <button class="btn-save" style="background:#3a3a3c;flex:2" onclick="openEditMsgModal()">編集</button>
+      <button class="btn-save" style="background:#c0392b;flex:2" onclick="confirmDeleteMsg()">削除</button>
+    </div>
+  </div>
+</div>
+<div class="overlay" id="editMsgOverlay">
+  <div class="modal">
+    <h2>メッセージを編集</h2>
+    <textarea id="editMsgInput" style="width:100%;min-height:240px;background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:9px 12px;color:var(--text);font-size:16px;font-family:inherit;outline:none;resize:none;line-height:1.4;" placeholder="メッセージ..."></textarea>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeEditMsgModal()">キャンセル</button>
+      <button class="btn-save" onclick="saveEditMsg()">保存</button>
+    </div>
   </div>
 </div>
 
 <script>
-  let books = JSON.parse(localStorage.getItem('books_log') || '[]');
-  let currentFilter = 'all';
-  let editingId = null;
-  let currentStatus = 'done';
-  let currentSource = 'buy';
+const KEY = 'ailog_v1';
+let convs = [], currentId = null, lastConvId = null, sortMode = 'created', aiRichHtml = '', inChat = false;
+try { convs = JSON.parse(localStorage.getItem(KEY)) || []; } catch(e) {}
 
-  function save() { localStorage.setItem('books_log', JSON.stringify(books)); }
+function persist() { localStorage.setItem(KEY, JSON.stringify(convs)); }
+function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
-  function handleOverlayClick(e, modalId) {
-    if (e.target === document.getElementById(modalId)) {
-      if (modalId === 'editModal') closeEditModal();
-      else closeDetailModal();
-    }
-  }
+function showChatUI() {
+  initScrollFeatures();
+  document.getElementById('chat-header').classList.add('visible');
+  document.getElementById('messages').classList.add('visible');
+  document.getElementById('input-panel').classList.add('visible');
+  document.getElementById('ai-input-panel').classList.remove('visible');
+  setTimeout(() => {
+    const hdrH = document.getElementById('chat-header').offsetHeight;
+    const msgs = document.getElementById('messages');
+    msgs.style.top = hdrH + 'px';
+    msgs.style.paddingTop = '0';
+    const panel = document.getElementById('ai-input-panel').classList.contains('visible')
+      ? document.getElementById('ai-input-panel')
+      : document.getElementById('input-panel');
+    msgs.style.bottom = '0';
+    msgs.style.paddingBottom = (h + 16) + 'px';
+  }, 10);
+}
+function hideChatUI() {
+  document.getElementById('chat-header').classList.remove('visible');
+  document.getElementById('messages').classList.remove('visible');
+  document.getElementById('input-panel').classList.remove('visible');
+  document.getElementById('ai-input-panel').classList.remove('visible');
+}
 
-  function openModal(id) {
+function updateMessagesPadding() {
+  const msgs = document.getElementById('messages');
+  const activePanel = document.getElementById('ai-input-panel').classList.contains('visible')
+    ? document.getElementById('ai-input-panel')
+    : document.getElementById('input-panel');
+  const h = activePanel.offsetHeight;
+  msgs.style.bottom = '0';
+  msgs.style.paddingBottom = (h + 16) + 'px';
+  msgs.scrollTop = msgs.scrollHeight + 300;
+  updatePanelFade(activePanel);
+}
+
+function updatePanelFade(panel) {
+  const fade = document.getElementById('panel-fade');
+  if (!fade || !panel) return;
+  const panelTop = window.innerHeight - panel.offsetHeight;
+  const panelRect = panel.getBoundingClientRect();
+  fade.style.bottom = (window.innerHeight - panelRect.top) + 'px';
+  const c = convs.find(x => x.id === currentId);
+  const fadeColor = c && c.ai === 'claude' ? '#262624' : '#000000';
+  fade.style.background = 'linear-gradient(to bottom, transparent, ' + fadeColor + ')';
+  fade.style.display = 'block';
+}
+function switchToAIMode() {
+  document.getElementById('input-panel').classList.remove('visible');
+  document.getElementById('ai-input-panel').classList.add('visible');
+  const ri = document.getElementById('aiRichInput');
+  ri.value = ''; ri.style.height = 'auto'; aiRichHtml = ''; ri.focus();
+  setTimeout(updateMessagesPadding, 50);
+}
+function switchToUserMode() {
+  document.getElementById('ai-input-panel').classList.remove('visible');
+  document.getElementById('input-panel').classList.add('visible');
+  document.getElementById('chatInput').focus();
+  setTimeout(updateMessagesPadding, 50);
+}
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 140) + 'px';
+}
+function sendMessage() {
+  const input = document.getElementById('chatInput');
+  const text = input.value.trim();
+  if (!text || !currentId) return;
+  const c = convs.find(x => x.id === currentId); if (!c) return;
+  c.messages.push({ role: 'user', text });
+  c.updatedAt = Date.now();
+  input.value = ''; input.style.height = 'auto';
+  renderMessages(c); switchToAIMode(); setTimeout(() => { const msgs = document.getElementById("messages"); msgs.scrollTop = msgs.scrollHeight + 300; }, 50);
+}
+function saveAIMessage() {
+  const el = document.getElementById('aiRichInput');
+  const raw = aiRichHtml || el.value.trim();
+  const text = normalizeAIHtml(raw);
+  if (!text || !currentId) { switchToUserMode(); return; }
+  const c = convs.find(x => x.id === currentId); if (!c) { switchToUserMode(); return; }
+  c.messages.push({ role: 'ai', text });
+  c.updatedAt = Date.now(); aiRichHtml = '';
+  renderMessages(c); switchToUserMode(); setTimeout(() => { const msgs = document.getElementById("messages"); msgs.scrollTop = msgs.scrollHeight + 300; }, 50);
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('chatInput').addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+  });
+  document.getElementById('aiRichInput').addEventListener('paste', e => {
+    const html = e.clipboardData.getData('text/html');
+    if (html) aiRichHtml = html;
+  });
+
+});
+
+function exportData() {
+  const blob = new Blob([JSON.stringify(convs, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url;
+  a.download = 'ailog_backup_' + new Date().toISOString().slice(0,10) + '.json';
+  a.click(); URL.revokeObjectURL(url);
+}
+function importData() { document.getElementById('importFile').click(); }
+function handleImport(e) {
+  const file = e.target.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      const imported = JSON.parse(ev.target.result);
+      if (!Array.isArray(imported)) throw new Error();
+      convs = imported; persist(); renderList();
+      alert(imported.length + '件の会話をインポートしました');
+    } catch { alert('インポートに失敗しました'); }
+    e.target.value = '';
+  };
+  reader.readAsText(file);
+}
+
+function openConvUI(id) {
+  currentId = id; inChat = true;
+  const c = convs.find(x => x.id === id);
+  document.getElementById('chatTitle').textContent = c.title;
+  const badge = document.getElementById('chatBadge');
+  badge.textContent = c.ai === 'grok' ? 'Grok' : 'Claude';
+  badge.className = 'conv-badge ' + (c.ai === 'grok' ? 'badge-grok' : 'badge-claude');
+  const msgs = document.getElementById('messages');
+  msgs.className = 'visible bg-' + c.ai;
+  const hdr = document.getElementById('chat-header');
+  const hdrColor = c.ai === 'claude' ? '#262624' : '#000000';
+  const panelBg = c.ai === 'claude' ? '#262624' : '#000000';
+  hdr.style.background = hdrColor;
+  hdr.style.setProperty('--header-bg', hdrColor);
+  document.getElementById('input-panel').style.background = panelBg;
+  document.getElementById('ai-input-panel').style.background = panelBg;
+  document.getElementById('input-panel').style.setProperty('--panel-fade', panelBg);
+  document.getElementById('ai-input-panel').style.setProperty('--panel-fade', panelBg);
+  updateHeaderFade(hdrColor);
+  const textareaColor = 'rgba(17,17,17,0.4)';
+  document.getElementById('chatInput').style.setProperty('background', textareaColor, 'important');
+  document.getElementById('aiRichInput').style.setProperty('background', textareaColor, 'important');
+  showChatUI(); renderMessages(c);
+}
+
+function newConv() {
+  const id = Date.now().toString();
+  convs.push({ id, title: '新しい会話', ai: 'grok', messages: [], createdAt: Date.now() });
+  persist(); openConvUI(id);
+  const lv = document.getElementById('list-view');
+  lv.style.transition = 'opacity 0.12s'; lv.style.opacity = '0';
+  setTimeout(() => { lv.style.display = 'none'; lv.style.opacity = ''; lv.style.transition = ''; document.getElementById('chatInput').focus(); }, 120);
+}
+function newConvFromChat() {
+  const id = Date.now().toString();
+  convs.push({ id, title: '新しい会話', ai: 'grok', messages: [], createdAt: Date.now() });
+  persist(); openConvUI(id); document.getElementById('chatInput').focus();
+}
+
+function openConv(id) {
+  const c = convs.find(x => x.id === id); if (!c) return;
+  c.openedAt = Date.now(); persist(); openConvUI(id);
+  const lv = document.getElementById('list-view');
+  lv.style.transition = 'opacity 0.12s'; lv.style.opacity = '0';
+  setTimeout(() => { lv.style.display = 'none'; lv.style.opacity = ''; lv.style.transition = ''; }, 120);
+}
+function backToList() {
+  lastConvId = currentId; inChat = false; hideChatUI();
+  const lv = document.getElementById('list-view');
+  lv.style.display = 'flex'; lv.style.opacity = '0';
+  renderList();
+  requestAnimationFrame(() => {
+    lv.style.transition = 'opacity 0.12s'; lv.style.opacity = '1';
+    setTimeout(() => { lv.style.transition = ''; }, 130);
+  });
+}
+
+function openTitleModal() {
+  const c = convs.find(x => x.id === currentId); if (!c) return;
+  document.getElementById('titleInput').value = c.title;
+  document.getElementById('titleOverlay').classList.add('open');
+  setTimeout(() => document.getElementById('titleInput').select(), 100);
+}
+function closeTitleModal() { document.getElementById('titleOverlay').classList.remove('open'); }
+function saveTitle() {
+  const t = document.getElementById('titleInput').value.trim(); if (!t) { closeTitleModal(); return; }
+  const c = convs.find(x => x.id === currentId); if (!c) { closeTitleModal(); return; }
+  c.title = t; persist(); document.getElementById('chatTitle').textContent = t; closeTitleModal(); renderList();
+}
+function toggleAI() {
+  const c = convs.find(x => x.id === currentId); if (!c) return;
+  c.ai = c.ai === 'grok' ? 'claude' : 'grok'; persist();
+  const badge = document.getElementById('chatBadge');
+  badge.textContent = c.ai === 'grok' ? 'Grok' : 'Claude';
+  badge.className = 'conv-badge ' + (c.ai === 'grok' ? 'badge-grok' : 'badge-claude');
+  document.getElementById('messages').className = 'visible bg-' + c.ai;
+  const hdr = document.getElementById('chat-header');
+  const hdrColor = c.ai === 'claude' ? '#262624' : '#000000';
+  const panelBg = c.ai === 'claude' ? '#262624' : '#000000';
+  hdr.style.background = hdrColor;
+  hdr.style.setProperty('--header-bg', hdrColor);
+  document.getElementById('input-panel').style.background = panelBg;
+  document.getElementById('ai-input-panel').style.background = panelBg;
+  document.getElementById('input-panel').style.setProperty('--panel-fade', panelBg);
+  document.getElementById('ai-input-panel').style.setProperty('--panel-fade', panelBg);
+  updateHeaderFade(hdrColor);
+  const textareaColor = 'rgba(17,17,17,0.4)';
+  document.getElementById('chatInput').style.setProperty('background', textareaColor, 'important');
+  document.getElementById('aiRichInput').style.setProperty('background', textareaColor, 'important');
+}
+
+function pasteToInput(id) {
+  navigator.clipboard.readText().then(text => {
     const el = document.getElementById(id);
-    el.style.display = 'flex';
-    requestAnimationFrame(() => el.classList.add('open'));
-    document.body.style.overflow = 'hidden';
-  }
+    el.value = text;
+  }).catch(() => {
+    document.getElementById(id).focus();
+  });
+}
 
-  function closeModal(id) {
-    const el = document.getElementById(id);
-    el.classList.remove('open');
-    el.style.display = 'none';
-    document.body.style.overflow = '';
-  }
+function initScrollFeatures() {
+  const msgs = document.getElementById('messages');
+  const btn = document.getElementById('scroll-bottom-btn');
 
-  function getFiltered() {
-    if (currentFilter === 'all') return books;
-    if (currentFilter === 'done') return books.filter(b => b.status === 'done');
-    if (currentFilter === 'reading') return books.filter(b => b.status === 'reading');
-    if (currentFilter === 'buy') return books.filter(b => b.source === 'buy');
-    if (currentFilter === 'borrow') return books.filter(b => b.source === 'borrow');
-    return books;
-  }
+  // スクロール位置でボタン表示/非表示 & 縦位置更新
+  msgs.addEventListener('scroll', () => {
+    const nearBottom = msgs.scrollHeight - msgs.scrollTop - msgs.clientHeight < 80;
+    btn.style.display = nearBottom ? 'none' : 'flex';
+    updateScrollBtnPosition();
+  });
 
-  function render() {
-    const list = document.getElementById('bookList');
-    const filtered = getFiltered();
-    document.getElementById('totalCount').textContent = books.length + ' books';
-
-    if (filtered.length === 0) {
-      list.innerHTML = `<div class="empty-state">
-        <span class="big">📖</span>
-        ${books.length === 0 ? '＋ボタンで最初の一冊を記録しよう' : 'この条件の本はまだない'}
-      </div>`;
-      return;
+  // 上ベゼル近くタップで一番上へ
+  msgs.addEventListener('touchend', e => {
+    if (e.changedTouches[0].clientY < 80) {
+      msgs.scrollTo({ top: 0, behavior: 'smooth' });
     }
+  });
+}
 
-    const sorted = [...filtered].sort((a, b) => {
-      if (!a.date && !b.date) return 0;
-      if (!a.date) return 1;
-      if (!b.date) return -1;
-      return b.date.localeCompare(a.date);
+function updateScrollBtnPosition() {
+  const btn = document.getElementById('scroll-bottom-btn');
+  const panel = document.getElementById('ai-input-panel').classList.contains('visible')
+    ? document.getElementById('ai-input-panel')
+    : document.getElementById('input-panel');
+  const panelH = panel.offsetHeight;
+  btn.style.bottom = (panelH + 10) + 'px';
+}
+
+function updateHeaderFade(color) {
+  const hdr = document.getElementById('chat-header');
+  const fade = document.getElementById('header-fade');
+  if (!fade) return;
+  setTimeout(() => {
+    const h = hdr.offsetHeight;
+    fade.style.top = h + 'px';
+    fade.style.background = 'linear-gradient(to bottom, ' + color + ', transparent)';
+    fade.classList.add('visible');
+  }, 10);
+}
+
+function renderList() {
+  const q = document.getElementById('searchInput').value.trim().toLowerCase();
+  const panel = document.getElementById('list-panel');
+  const filtered = convs.filter(c => !q || c.title.toLowerCase().includes(q) || c.messages.some(m => m.text.toLowerCase().includes(q)));
+  if (!filtered.length) { panel.innerHTML = '<div class="empty-list">会話がまだないか、<br>検索結果なし</div>'; return; }
+  const sorted = filtered.slice().sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+  panel.innerHTML = sorted.map(c => {
+    const preview = (c.messages[0]?.text || '').replace(/<[^>]*>/g, '').slice(0, 40);
+    const bl = c.ai === 'grok' ? 'badge-grok' : 'badge-claude';
+    const lb = c.ai === 'grok' ? 'Grok' : 'Claude';
+    const dt = new Date(c.createdAt).toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric' });
+    return `<div class="conv-row" data-id="${c.id}"><div class="conv-item"><span class="conv-badge ${bl}">${lb}</span><div class="conv-info"><div class="conv-title">${esc(c.title)}</div><div class="conv-preview">${esc(preview)}</div></div><div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0"><span class="conv-date">${dt}</span><span class="conv-date" style="display:flex;align-items:center;gap:3px"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d='M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z'/></svg>${c.messages.length}</span></div></div><div class="delete-btn">削除</div></div>`;
+  }).join('');
+  initSwipe();
+}
+
+// メッセージ長押し
+let deleteMsgIndex = null, deleteMsgRow = null;
+function openDeleteMsgModal(idx, row) { deleteMsgIndex = idx; deleteMsgRow = row; document.getElementById('deleteMsgOverlay').classList.add('open'); }
+function closeDeleteMsgModal() {
+  if (deleteMsgRow) { const b = deleteMsgRow.querySelector('.bubble'); b.style.transform = ''; b.style.transition = ''; deleteMsgRow = null; }
+  deleteMsgIndex = null; document.getElementById('deleteMsgOverlay').classList.remove('open');
+}
+function copyMsg() {
+  const c = convs.find(x => x.id === currentId); if (!c || deleteMsgIndex === null) { closeDeleteMsgModal(); return; }
+  const html = c.messages[deleteMsgIndex].text;
+  const tmp = document.createElement('div'); tmp.innerHTML = html;
+  const plain = tmp.textContent || tmp.innerText || '';
+  try {
+    navigator.clipboard.write([new ClipboardItem({ 'text/html': new Blob([html], { type: 'text/html' }), 'text/plain': new Blob([plain], { type: 'text/plain' }) })]).then(() => closeDeleteMsgModal()).catch(() => navigator.clipboard.writeText(plain).then(() => closeDeleteMsgModal()));
+  } catch(e) { navigator.clipboard.writeText(plain).then(() => closeDeleteMsgModal()); }
+}
+function openEditMsgModal() {
+  const c = convs.find(x => x.id === currentId); if (!c || deleteMsgIndex === null) return;
+  const tmp = document.createElement('div'); tmp.innerHTML = c.messages[deleteMsgIndex].text;
+  document.getElementById('editMsgInput').value = tmp.textContent || tmp.innerText || c.messages[deleteMsgIndex].text;
+  document.getElementById('deleteMsgOverlay').classList.remove('open');
+  document.getElementById('editMsgOverlay').classList.add('open');
+}
+function closeEditMsgModal() { document.getElementById('editMsgOverlay').classList.remove('open'); closeDeleteMsgModal(); }
+function saveEditMsg() {
+  const c = convs.find(x => x.id === currentId); if (!c || deleteMsgIndex === null) { closeEditMsgModal(); return; }
+  const newText = document.getElementById('editMsgInput').value.trim(); if (!newText) { closeEditMsgModal(); return; }
+  c.messages[deleteMsgIndex].text = newText; persist();
+  const msgs = document.getElementById('messages'); const sp = msgs.scrollTop;
+  closeEditMsgModal(); renderMessages(c, sp);
+}
+function confirmDeleteMsg() {
+  if (deleteMsgIndex === null || !currentId) { closeDeleteMsgModal(); return; }
+  const c = convs.find(x => x.id === currentId); if (!c) { closeDeleteMsgModal(); return; }
+  c.messages.splice(deleteMsgIndex, 1); persist(); closeDeleteMsgModal(); renderMessages(c);
+}
+
+function renderMessages(c, scrollPos) {
+  const msgs = document.getElementById('messages');
+  msgs.innerHTML = c.messages.map((m, i) => {
+    if (m.role === 'ai') return `<div class="msg-row ai" data-index="${i}"><div class="bubble ai-rich">${renderAI(m.text)}</div></div>`;
+    return `<div class="msg-row user" data-index="${i}"><div class="bubble">${esc(m.text)}</div></div>`;
+  }).join('');
+  if (scrollPos !== undefined) msgs.scrollTop = scrollPos;
+  else requestAnimationFrame(() => { msgs.scrollTop = msgs.scrollHeight + 300; });
+
+  msgs.querySelectorAll('.msg-row').forEach(row => {
+    let timer, activated = false;
+    row.addEventListener('touchstart', () => {
+      activated = false;
+      timer = setTimeout(() => {
+        activated = true;
+        const b = row.querySelector('.bubble');
+        b.style.transition = 'transform 0.15s';
+        b.style.transform = row.classList.contains('user') ? 'scale(1.04)' : 'scale(1.02)';
+        setTimeout(() => openDeleteMsgModal(parseInt(row.dataset.index), row), 75);
+      }, 600);
+    }, { passive: true });
+    row.addEventListener('touchend', () => { clearTimeout(timer); }, { passive: true });
+    row.addEventListener('touchmove', () => { clearTimeout(timer); activated = false; }, { passive: true });
+  });
+}
+
+function renderAI(text) {
+  text = normalizeAIHtml(text);
+  if (/<(h[1-6]|ul|ol|li|p|div|br)[^>]*>/i.test(text)) { const tmp = document.createElement('div'); tmp.innerHTML = text; return tmp.innerHTML; }
+  return text.split('\n').map(line => {
+    if (/^### /.test(line)) return '<h3>' + line.replace(/^### /, '') + '</h3>';
+    if (/^## /.test(line)) return '<h2>' + line.replace(/^## /, '') + '</h2>';
+    if (/^# /.test(line)) return '<h1>' + line.replace(/^# /, '') + '</h1>';
+    if (/^[•\-\*] (.+)/.test(line)) return '<li>' + line.replace(/^[•\-\*] /, '') + '</li>';
+    line = line.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+    return line ? '<p>' + line + '</p>' : '';
+  }).join('');
+}
+function normalizeAIHtml(html) {
+  html = html.replace(/(<br\s*\/?>)/gi, '</p><p>');
+  const tmp = document.createElement('div'); tmp.innerHTML = html;
+  tmp.querySelectorAll('[style]').forEach(el => el.removeAttribute('style'));
+  tmp.querySelectorAll('p').forEach(el => { if (!el.textContent.trim()) el.remove(); });
+  tmp.querySelectorAll('p, div').forEach(el => {
+    const children = Array.from(el.childNodes).filter(n => !(n.nodeType === 3 && n.textContent.trim() === ''));
+    if (children.length === 1) {
+      const child = children[0];
+      if (['STRONG','B','SPAN'].includes(child.nodeName)) {
+        const text = child.textContent.trim();
+        if (text.length < 60 && !/[。、！？!?」』】]$/.test(text) && !/[「」『』]/.test(text)) {
+          const h2 = document.createElement('h2'); h2.textContent = text; el.replaceWith(h2);
+        }
+      }
+    }
+  });
+  return tmp.innerHTML;
+}
+
+document.getElementById('titleOverlay').addEventListener('click', e => { if (e.target === e.currentTarget) closeTitleModal(); });
+document.getElementById('deleteMsgOverlay').addEventListener('click', e => { if (e.target === e.currentTarget) closeDeleteMsgModal(); });
+document.getElementById('editMsgOverlay').addEventListener('click', e => { if (e.target === e.currentTarget) closeEditMsgModal(); });
+
+function initSwipe() {
+  document.querySelectorAll('.conv-row').forEach(row => {
+    const item = row.querySelector('.conv-item');
+    const delBtn = row.querySelector('.delete-btn');
+    const id = row.dataset.id;
+    let startX = 0, startY = 0, currentX = 0, moved = false;
+    item.addEventListener('click', () => { if (!moved) openConv(id); });
+    delBtn.addEventListener('click', () => { convs = convs.filter(c => c.id !== id); persist(); renderList(); });
+    row.addEventListener('touchstart', e => { startX = e.touches[0].clientX; startY = e.touches[0].clientY; currentX = 0; moved = false; }, { passive: true });
+    row.addEventListener('touchmove', e => {
+      const dx = e.touches[0].clientX - startX, dy = e.touches[0].clientY - startY;
+      if (Math.abs(dy) > Math.abs(dx)) return;
+      e.preventDefault();
+      if (dx < 0) { moved = true; currentX = Math.max(dx, -80); item.style.transition = 'none'; item.style.transform = `translateX(${currentX}px)`; delBtn.style.transition = 'none'; delBtn.style.right = `${-80 - currentX}px`; }
+    }, { passive: false });
+    row.addEventListener('touchend', () => {
+      item.style.transition = 'transform 0.2s'; delBtn.style.transition = 'right 0.2s';
+      if (currentX < -40) { item.style.transform = 'translateX(-80px)'; delBtn.style.right = '0px'; }
+      else { item.style.transform = ''; delBtn.style.right = '-80px'; moved = false; }
+    });
+  });
+  document.getElementById('list-panel').addEventListener('touchstart', e => {
+    document.querySelectorAll('.conv-row').forEach(row => {
+      if (!row.contains(e.target)) { row.querySelector('.conv-item').style.cssText += 'transition:transform 0.2s;transform:none;'; row.querySelector('.delete-btn').style.cssText += 'transition:right 0.2s;right:-80px;'; }
+    });
+  }, { passive: true });
+}
+
+renderList();
+
+// visualViewport でキーボード対策
+(function() {
+  const vv = window.visualViewport;
+  if (!vv) return;
+
+  const inputPanel   = document.getElementById('input-panel');
+  const aiInputPanel = document.getElementById('ai-input-panel');
+  const msgs         = document.getElementById('messages');
+
+  let ticking = false;
+
+  function apply() {
+    ticking = false;
+    const kbH = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
+
+    // bottomをキーボード高さ分上げる
+    [inputPanel, aiInputPanel].forEach(el => {
+      if (el) el.style.bottom = kbH + 'px';
     });
 
-    list.innerHTML = sorted.map(b => `
-      <div class="book-card" onclick="openDetail('${b.id}')">
-        <div class="book-card-top">
-          <div style="flex:1">
-            <div class="book-title">${esc(b.title)}</div>
-            ${b.author ? `<div class="book-author">${esc(b.author)}</div>` : ''}
-          </div>
-          <div class="book-tags">
-            <span class="tag ${b.status==='done'?'tag-done':'tag-reading'}">${b.status==='done'?'読了':'未読了'}</span>
-            <span class="tag ${b.source==='buy'?'tag-buy':'tag-borrow'}">${b.source==='buy'?'購入':'借りた'}</span>
-          </div>
-        </div>
-        ${b.date ? `<div class="book-date">${b.date}</div>` : ''}
-        ${b.review ? `<div class="book-review-preview">${esc(b.review)}</div>` : ''}
-      </div>
-    `).join('');
+    // メッセージ欄のpadding-bottomを調整
+    if (msgs) msgs.style.paddingBottom = (kbH + 70) + 'px';
   }
 
-  function esc(s) {
-    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-  }
-
-  function setFilter(filter, el) {
-    currentFilter = filter;
-    document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
-    el.classList.add('active');
-    render();
-  }
-
-  function openAddModal() {
-    editingId = null;
-    currentStatus = 'done';
-    currentSource = 'buy';
-    document.getElementById('editModalTitle').textContent = '新しい本';
-    document.getElementById('inputTitle').value = '';
-    document.getElementById('inputAuthor').value = '';
-    document.getElementById('inputDate').value = new Date().toISOString().split('T')[0];
-    document.getElementById('inputReview').value = '';
-    document.getElementById('deleteBtn').style.display = 'none';
-    updateStatusUI();
-    updateSourceUI();
-    openModal('editModal');
-  }
-
-  function openEditModal(id) {
-    const b = books.find(x => x.id === id);
-    if (!b) return;
-    editingId = id;
-    currentStatus = b.status || 'done';
-    currentSource = b.source || 'buy';
-    document.getElementById('editModalTitle').textContent = '編集';
-    document.getElementById('inputTitle').value = b.title;
-    document.getElementById('inputAuthor').value = b.author || '';
-    document.getElementById('inputDate').value = b.date || '';
-    document.getElementById('inputReview').value = b.review || '';
-    document.getElementById('deleteBtn').style.display = 'block';
-    updateStatusUI();
-    updateSourceUI();
-    closeDetailModal();
-    openModal('editModal');
-  }
-
-  function closeEditModal() { closeModal('editModal'); }
-
-  function setStatus(s) { currentStatus = s; updateStatusUI(); }
-  function setSource(s) { currentSource = s; updateSourceUI(); }
-
-  function updateStatusUI() {
-    document.getElementById('btnDone').classList.toggle('active', currentStatus === 'done');
-    document.getElementById('btnReading').classList.toggle('active', currentStatus === 'reading');
-  }
-
-  function updateSourceUI() {
-    document.getElementById('btnBuy').classList.toggle('active', currentSource === 'buy');
-    document.getElementById('btnBorrow').classList.toggle('active', currentSource === 'borrow');
-  }
-
-  function saveBook() {
-    const title = document.getElementById('inputTitle').value.trim();
-    if (!title) {
-      const el = document.getElementById('inputTitle');
-      el.focus();
-      el.style.borderColor = '#c0392b';
-      setTimeout(() => el.style.borderColor = '', 1500);
-      return;
+  function onVpChange() {
+    if (!ticking) {
+      requestAnimationFrame(apply);
+      ticking = true;
     }
-    const book = {
-      id: editingId || Date.now().toString(),
-      title,
-      author: document.getElementById('inputAuthor').value.trim(),
-      date: document.getElementById('inputDate').value,
-      status: currentStatus,
-      source: currentSource,
-      review: document.getElementById('inputReview').value.trim(),
-      updatedAt: new Date().toISOString()
-    };
-    if (editingId) {
-      const idx = books.findIndex(b => b.id === editingId);
-      if (idx !== -1) books[idx] = book;
-    } else {
-      books.unshift(book);
-    }
-    save();
-    render();
-    closeEditModal();
   }
 
-  function deleteBook() {
-    if (!editingId) return;
-    if (!confirm('この記録を削除する？')) return;
-    books = books.filter(b => b.id !== editingId);
-    save();
-    render();
-    closeEditModal();
-  }
+  vv.addEventListener('resize', onVpChange);
+  vv.addEventListener('scroll', onVpChange);
+})();
 
-  function openDetail(id) {
-    const b = books.find(x => x.id === id);
-    if (!b) return;
-    document.getElementById('detailBody').innerHTML = `
-      <div>
-        <h2 style="font-size:18px;font-weight:600;line-height:1.6;color:#2a2520">${esc(b.title)}</h2>
-        ${b.author ? `<p style="font-size:13px;color:#9e9890;margin-top:4px">${esc(b.author)}</p>` : ''}
-      </div>
-      <div class="detail-tags">
-        <span class="tag ${b.status==='done'?'tag-done':'tag-reading'}">${b.status==='done'?'読了':'未読了'}</span>
-        <span class="tag ${b.source==='buy'?'tag-buy':'tag-borrow'}">${b.source==='buy'?'購入':'借りた'}</span>
-      </div>
-      ${b.date ? `<div class="detail-field">
-        <span class="field-label">読んだ日付</span>
-        <div class="detail-value">${b.date}</div>
-      </div>` : ''}
-      ${b.review ? `<div class="detail-field">
-        <span class="field-label">感想・レビュー</span>
-        <div class="detail-value">${esc(b.review)}</div>
-      </div>` : ''}
-      <button class="btn-small" style="width:100%;padding:10px;text-align:center;color:#2a2520" onclick="openEditModal('${b.id}')">編集する</button>
-    `;
-    openModal('detailModal');
-  }
-
-  function closeDetailModal() { closeModal('detailModal'); }
-
-  function exportJSON() {
-    if (books.length === 0) { alert('記録がまだない'); return; }
-    const blob = new Blob([JSON.stringify(books, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'books_' + new Date().toISOString().split('T')[0] + '.json';
-    a.click();
-    URL.revokeObjectURL(url);
-  }
-
-  function importJSON(e) {
-    const file = e.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      try {
-        const data = JSON.parse(ev.target.result);
-        if (!Array.isArray(data)) throw new Error();
-        if (!confirm(data.length + '件のデータをインポートする？')) return;
-        const existingIds = new Set(books.map(b => b.id));
-        const newBooks = data.filter(b => !existingIds.has(b.id));
-        books = [...books, ...newBooks];
-        save();
-        render();
-        alert(newBooks.length + '件追加した');
-      } catch {
-        alert('読み込みに失敗した。正しいJSONファイルか確認して');
-      }
-    };
-    reader.readAsText(file);
-    e.target.value = '';
-  }
-
-  render();
-
+// 右スワイプでリストへ
+(function() {
+  let sx = 0, sy = 0;
+  document.addEventListener('touchstart', e => { sx = e.touches[0].clientX; sy = e.touches[0].clientY; }, { passive: true });
+  document.addEventListener('touchend', e => {
+    if (!inChat) return;
+    const dx = e.changedTouches[0].clientX - sx;
+    const dy = e.changedTouches[0].clientY - sy;
+    if (dx > 60 && Math.abs(dy) < 60) backToList();
+  }, { passive: true });
+})();
 </script>
 
 </body>
